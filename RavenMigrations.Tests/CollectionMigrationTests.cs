@@ -129,12 +129,12 @@ namespace RavenMigrations.Tests
     {
         public override void Down()
         {
-            MigrateCollection("People", JoinFirstNameAndLastNameIntoName);
+            Alter.Collection("People", JoinFirstNameAndLastNameIntoName);
         }
 
         public override void Up()
         {
-            MigrateCollection("People", SplitNameToFirstNameAndLastName);
+            Alter.Collection("People", SplitNameToFirstNameAndLastName);
         }
 
         private void JoinFirstNameAndLastNameIntoName(RavenJObject obj)

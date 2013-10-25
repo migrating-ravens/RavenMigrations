@@ -122,6 +122,7 @@ namespace RavenMigrations.Tests
                     Direction = Directions.Down
                 });
 
+                WaitForIndexing(store);
                 using (var session = store.OpenSession())
                 {
                     session.Query<TestDocument, TestDocumentIndex>()
