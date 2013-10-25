@@ -37,10 +37,13 @@ namespace RavenMigrations.Tests
             using (var store = NewDocumentStore())
             {
                 InitialiseWithPerson(store, "Sean Kearon");
-                Runner.Run(store, GetMigrationOptions(Directions.Down));
+
+                var migration = new CollectionDocumentMigration();
+                migration.Setup(store);
+                migration.Up();
                 WaitForIndexing(store);
 
-                Runner.Run(store, GetMigrationOptions(Directions.Down));
+                migration.Down();
                 UpdateCollectionMetadataToAllowLoadingByType<Person>(store, "People");
                 WaitForIndexing(store);
 
@@ -58,7 +61,9 @@ namespace RavenMigrations.Tests
             using (var store = NewDocumentStore())
             {
                 InitialiseWithPerson(store, "Sean Kearon");
-                Runner.Run(store, GetMigrationOptions());
+                var migration = new CollectionDocumentMigration();
+                migration.Setup(store);
+                migration.Up();
                 WaitForIndexing(store);
 
                 using (var session = store.OpenSession())
@@ -82,11 +87,6 @@ namespace RavenMigrations.Tests
         private string GetMetadataClrTypeName<T>()
         {
             return string.Join(",", typeof (T).AssemblyQualifiedName.Split(new[] {','}).Take(2));
-        }
-
-        private MigrationOptions GetMigrationOptions(Directions direction = Directions.Up)
-        {
-            return new MigrationOptions { Profiles = new[] { "CollectionDocumentMigration" }, Direction = direction };
         }
 
         private void InitialiseWithPerson(IDocumentStore store, string name)
@@ -117,7 +117,7 @@ namespace RavenMigrations.Tests
                                 Type = PatchCommandType.Set,
                                 Name = "Raven-Clr-Type",
                                 Value = new RavenJValue(assemblyName)
-                            },
+                            }
                         }
                     }
                 });
