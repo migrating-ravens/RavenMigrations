@@ -85,7 +85,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CollectionMigrationTests.cs" />
+    <Compile Include="AlterTests.cs" />
     <Compile Include="RunnerTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
