@@ -12,16 +12,15 @@ namespace RavenMigrations.Verbs
         public Alter(IDocumentStore documentStore)
         {
             DocumentStore = documentStore;
-            Metadata = new Metadata(documentStore);
         }
 
         /// <summary>
         ///     Allows migration of a collection of documents one document at a time.
         /// </summary>
         /// <param name="tag">The name of the collection.</param>
-        /// <param name="action">The action to migrate a single document.</param>
+        /// <param name="action">The action to migrate a single document and metadata.</param>
         /// <param name="pageSize">The page size for batching the documents.</param>
-        public void Collection(string tag, Action<RavenJObject> action, int pageSize = 128)
+        public void Collection(string tag, Action<RavenJObject, RavenJObject> action, int pageSize = 128)
         {
             var count = 0;
             do
@@ -39,16 +38,17 @@ namespace RavenMigrations.Verbs
 
                 count += queryResult.Results.Count;
                 var cmds = new List<ICommandData>();
-                foreach (var result in queryResult.Results)
+                foreach (var entity in queryResult.Results)
                 {
-                    action(result);
+                    var metadata = entity.Value<RavenJObject>("@metadata");
 
-                    var value = result.Value<RavenJObject>("@metadata");
+                    action(entity, metadata);
+
                     cmds.Add(new PutCommandData
                     {
-                        Document = result,
-                        Metadata = value,
-                        Key = value.Value<string>("@id"),
+                        Document = entity,
+                        Metadata = metadata,
+                        Key = metadata.Value<string>("@id"),
                     });
                 }
 
@@ -56,7 +56,6 @@ namespace RavenMigrations.Verbs
             } while (true);
         }
 
-        public Metadata Metadata { get; set; }
         protected IDocumentStore DocumentStore { get; private set; }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System.Threading;
 using FluentAssertions;
+using Raven.Abstractions.Data;
 using Raven.Client;
 using Raven.Client.Indexes;
 using Raven.Json.Linq;
@@ -8,46 +9,15 @@ using Xunit;
 
 namespace RavenMigrations.Tests
 {
-
     public class AlterTests : RavenTestBase
     {
         [Fact]
-        public void Can_alter_metadata_clr_type()
+        public void Can_migrate_down_from_new_clr_type()
         {
             using (var store = NewDocumentStore())
             {
                 InitialiseWithPerson(store, "Sean Kearon");
 
-                var migration = new MetadataClrTypeMigration();
-                migration.Setup(store);
-
-                migration.Up();
-                WaitForIndexing(store);
-
-                using (var session = store.OpenSession())
-                {
-                    var person2 = session.Load<Person2>("People/1");
-                    person2.Should().NotBeNull("we should be able to load the person as a Person2.");
-                }
-
-                migration.Down();
-                WaitForIndexing(store);
-
-                using (var session = store.OpenSession())
-                {
-                    var person1 = session.Load<Person1>("People/1");
-                    person1.Should().NotBeNull("we should be able to load the person as a Person2.");
-                }
-            }
-        }
-
-        [Fact]
-        public void Can_migrate_down()
-        {
-            using (var store = NewDocumentStore())
-            {
-                InitialiseWithPerson(store, "Sean Kearon");
-                
                 var migration = new AlterCollectionMigration();
                 migration.Setup(store);
 
@@ -66,15 +36,15 @@ namespace RavenMigrations.Tests
         }
 
         [Fact]
-        public void Can_migrate_up()
+        public void Can_migrate_up_to_new_clr_type()
         {
             using (var store = NewDocumentStore())
             {
                 InitialiseWithPerson(store, "Sean Kearon");
-                
+
                 var migration = new AlterCollectionMigration();
                 migration.Setup(store);
-                
+
                 migration.Up();
                 WaitForIndexing(store);
 
@@ -94,7 +64,7 @@ namespace RavenMigrations.Tests
             new RavenDocumentsByEntityName().Execute(store); //https://groups.google.com/forum/#!topic/ravendb/QqZPrRUwEkE
             using (var session = store.OpenSession())
             {
-                session.Store(new Person1 { Id = "People/1", Name = name });
+                session.Store(new Person1 {Id = "People/1", Name = name});
                 session.SaveChanges();
             }
             WaitForIndexing(store);
@@ -105,50 +75,37 @@ namespace RavenMigrations.Tests
     {
         public override void Down()
         {
-            Alter.Metadata.RavenClrType("Person1s", "RavenMigrations.Tests.Person1, RavenMigrations.Tests");
-            WaitForIndexing();
-            Alter.Collection("Person1s", JoinFirstNameAndLastNameIntoName);
+            Alter.Collection("Person1s", MigratePerson2ToPerson1);
         }
 
         public override void Up()
         {
-            Alter.Metadata.RavenClrType("Person1s", "RavenMigrations.Tests.Person2, RavenMigrations.Tests");
-            WaitForIndexing();
-            Alter.Collection("Person1s", SplitNameToFirstNameAndLastName);
+            Alter.Collection("Person1s", MigratePerson1ToPerson2);
         }
 
-        private void JoinFirstNameAndLastNameIntoName(RavenJObject obj)
+        private void MigratePerson2ToPerson1(RavenJObject doc, RavenJObject metadata)
         {
-            var first = obj.Value<string>("FirstName");
-            var last = obj.Value<string>("LastName");
+            var first = doc.Value<string>("FirstName");
+            var last = doc.Value<string>("LastName");
 
-            obj["Name"] = first + " " + last;
-            obj.Remove("FirstName");
-            obj.Remove("LastName");
+            doc["Name"] = first + " " + last;
+            doc.Remove("FirstName");
+            doc.Remove("LastName");
+
+            metadata[Constants.RavenClrType] = "RavenMigrations.Tests.Person1, RavenMigrations.Tests";
         }
 
-        private void SplitNameToFirstNameAndLastName(RavenJObject obj)
+        private void MigratePerson1ToPerson2(RavenJObject doc, RavenJObject metadata)
         {
-            var name = obj.Value<string>("Name");
+            var name = doc.Value<string>("Name");
             if (!string.IsNullOrEmpty(name))
             {
-                obj["FirstName"] = name.Split(' ')[0];
-                obj["LastName"] = name.Split(' ')[1];
+                doc["FirstName"] = name.Split(' ')[0];
+                doc["LastName"] = name.Split(' ')[1];
             }
-            obj.Remove("Name");
-        }
-    }
+            doc.Remove("Name");
 
-    public class MetadataClrTypeMigration : Migration
-    {
-        public override void Down()
-        {
-            Alter.Metadata.RavenClrType("Person1s", "RavenMigrations.Tests.Person1, RavenMigrations.Tests");
-        }
-
-        public override void Up()
-        {
-            Alter.Metadata.RavenClrType("Person1s", "RavenMigrations.Tests.Person2, RavenMigrations.Tests");
+            metadata[Constants.RavenClrType] = "RavenMigrations.Tests.Person2, RavenMigrations.Tests";
         }
     }
 

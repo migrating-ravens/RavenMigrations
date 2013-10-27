@@ -61,7 +61,6 @@
     <Compile Include="RavenMigrationHelpers.cs" />
     <Compile Include="Runner.cs" />
     <Compile Include="Verbs\Alter.cs" />
-    <Compile Include="Verbs\Metadata.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
