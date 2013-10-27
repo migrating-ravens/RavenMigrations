@@ -50,6 +50,7 @@
   <ItemGroup>
     <Compile Include="DefaultMigrationResolver.cs" />
     <Compile Include="Directions.cs" />
+    <Compile Include="Extensions\MigrationExtensions.cs" />
     <Compile Include="IMigrationResolver.cs" />
     <Compile Include="MigrationAttribute.cs" />
     <Compile Include="Migration.cs" />
@@ -60,6 +61,7 @@
     <Compile Include="RavenMigrationHelpers.cs" />
     <Compile Include="Runner.cs" />
     <Compile Include="Verbs\Alter.cs" />
+    <Compile Include="Verbs\Metadata.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

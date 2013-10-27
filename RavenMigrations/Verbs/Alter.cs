@@ -12,12 +12,11 @@ namespace RavenMigrations.Verbs
         public Alter(IDocumentStore documentStore)
         {
             DocumentStore = documentStore;
+            Metadata = new Metadata(documentStore);
         }
 
-        protected IDocumentStore DocumentStore { get; private set; }
-
         /// <summary>
-        /// Allows migration of a collection of documents one document at a time.
+        ///     Allows migration of a collection of documents one document at a time.
         /// </summary>
         /// <param name="tag">The name of the collection.</param>
         /// <param name="action">The action to migrate a single document.</param>
@@ -54,10 +53,10 @@ namespace RavenMigrations.Verbs
                 }
 
                 DocumentStore.DatabaseCommands.Batch(cmds.ToArray());
-            }
-            while (true);
-
+            } while (true);
         }
-        
+
+        public Metadata Metadata { get; set; }
+        protected IDocumentStore DocumentStore { get; private set; }
     }
 }
