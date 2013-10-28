@@ -106,11 +106,21 @@ We understand there are times when you want to run specific migrations in certai
 ```
 
 ### Advanced Migrations
-Raven Migrations lets you work at the **RavenJObject** level by using ```Alter.Collection```.  This gives you full access to the document and metadata during a migration.  
+Raven Migrations lets you migrate at the **RavenJObject** level, giving full access to the document and metadata.  This closely follows [Ayende's](https://github.com/ayende) approach porting the [MVC Music Store](http://ayende.com/blog/4519/porting-mvc-music-store-to-raven-advanced-migrations).  
 
-This closely follows [Ayende's](https://github.com/ayende) approach in his series on porting the [MVC Music Store](http://ayende.com/blog/4519/porting-mvc-music-store-to-raven-advanced-migrations).  ```Alter.Collection``` takes care of the batching of documents changes and lets the migration focus on the document changes.
+#### Alter.Collection
+```Alter.Collection``` works on a collection and gives access to the document and metadata:
 
-#### Example
+```
+Alter.Collection("People", (doc, metadata) => { ... });
+```
+
+Batching changes is taken care of with the default batch size being 128.  You can change the batch size if needed: 
+```
+public void Collection(string tag, Action<RavenJObject, RavenJObject> action, int pageSize = 128)
+```
+
+#### Example 1
 Let's say you start using a single property:
 
 ```
@@ -129,12 +139,11 @@ But then want to change using two properties:
         public string LastName { get; set; }
     }
 ```
-Without migrating the documents, when you load your new ```Person``` you will not have any data in ```FirstName``` or ```LastName```.   The following migration fixes that by splitting out the first and last names from the single name property.   
-
+You now need to migrating your documents or you will lose data when you load your new ```Person```.  The following migration uses ```Alter.Collection``` to split out the first and last names:   
 
 ```
     [Migration(1)]
-    public class AlterCollectionMigration : Migration
+    public class PersonNameMigration : Migration
     {
         public override void Down()
         {
@@ -165,6 +174,33 @@ Without migrating the documents, when you load your new ```Person``` you will no
                 doc["LastName"] = name.Split(' ')[1];
             }
             doc.Remove("Name");
+        }
+    }
+```
+
+#### Working with Metadata
+Let's say that you refactor and move ```Person``` to another assembly.  So that RavenDB will load the data into the new class, you will need to adjust the metadata in the collection for the new CLR type.
+
+```
+    [Migration(2)]
+    public class MovePersonMigration : Migration
+    {
+        public override void Up()
+        {
+            Alter.Collection("People",
+                (doc, metadata) =>
+                {
+                    metadata[Constants.RavenClrType] = "MyProject.Person, MyProject";
+                });
+        }
+
+        public override void Down()
+        {
+            Alter.Collection("People",
+                (doc, metadata) =>
+                {
+                    metadata[Constants.RavenClrType] = "MyProject.Domain.Person, Domain";
+                });
         }
     }
 ```
