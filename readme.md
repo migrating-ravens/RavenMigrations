@@ -3,7 +3,7 @@
 ## Quick Start
 
 ```
-	PM > Install-Package RavenMigrations
+    PM > Install-Package RavenMigrations
 ```
 
 ## Introduction
@@ -103,6 +103,70 @@ We understand there are times when you want to run specific migrations in certai
     }
 
     Runner.Run(store, new MigrationOptions { Profiles = new[] { "development" } });
+```
+
+### Advanced Migrations
+Raven Migrations lets you work at the **RavenJObject** level by using ```Alter.Collection```.  This gives you full access to the document and metadata during a migration.  
+
+This closely follows [Ayende's](https://github.com/ayende) approach in his series on porting the [MVC Music Store](http://ayende.com/blog/4519/porting-mvc-music-store-to-raven-advanced-migrations).  ```Alter.Collection``` takes care of the batching of documents changes and lets the migration focus on the document changes.
+
+#### Example
+Let's say you start using a single property:
+
+```
+    public class Person
+    {
+        public string Id { get; set; }
+        public string Name { get; set; }
+    }
+```
+But then want to change using two properties:
+```
+    public class Person
+    {
+        public string Id { get; set; }
+        public string FirstName { get; set; }
+        public string LastName { get; set; }
+    }
+```
+Without migrating the documents, when you load your new ```Person``` you will not have any data in ```FirstName``` or ```LastName```.   The following migration fixes that by splitting out the first and last names from the single name property.   
+
+
+```
+    [Migration(1)]
+    public class AlterCollectionMigration : Migration
+    {
+        public override void Down()
+        {
+            Alter.Collection("People", MigratePerson2ToPerson1);
+        }
+
+        public override void Up()
+        {
+            Alter.Collection("People", MigratePerson1ToPerson2);
+        }
+
+        private void MigratePerson2ToPerson1(RavenJObject doc, RavenJObject metadata)
+        {
+            var first = doc.Value<string>("FirstName");
+            var last = doc.Value<string>("LastName");
+
+            doc["Name"] = first + " " + last;
+            doc.Remove("FirstName");
+            doc.Remove("LastName");
+        }
+
+        private void MigratePerson1ToPerson2(RavenJObject doc, RavenJObject metadata)
+        {
+            var name = doc.Value<string>("Name");
+            if (!string.IsNullOrEmpty(name))
+            {
+                doc["FirstName"] = name.Split(' ')[0];
+                doc["LastName"] = name.Split(' ')[1];
+            }
+            doc.Remove("Name");
+        }
+    }
 ```
 
 ## Integration
