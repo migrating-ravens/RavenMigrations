@@ -30,12 +30,16 @@ namespace RavenMigrations.Verbs
                     {
                         Query = "Tag:" + tag,
                         PageSize = pageSize,
-                        Start = count
+                        Start = count,
+                        SortedFields = new[] { new SortedField("LastModified") { Descending = true }, }
+                        //Unless we specify a sort order, the documents will come back in arbitrary order
+                        //which may change between batches.  Need to use LastModified descending rather than
+                        //ascending to ensure we don't start getting docs that have just been changed by migration
                     },
                     null);
 
                 if (queryResult.Results.Count == 0) break;
-
+                
                 count += queryResult.Results.Count;
                 var cmds = new List<ICommandData>();
                 foreach (var entity in queryResult.Results)
