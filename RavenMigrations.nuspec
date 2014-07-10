@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
     <metadata>
         <id>RavenMigrations</id>
-        <version>1.0.1</version>
+        <version>1.1.0</version>
         <title>Raven Migrations</title>
         <authors>Khalid Abuhakmeh</authors>
         <owners>khalidabuhakmeh</owners>
@@ -12,12 +12,13 @@
         <description>Raven Migrations is a migration framework for RavenDB to help with common tasks you might have to do over time to your database. The framework API is heavily influenced by Fluent Migrator</description>
         <summary>Raven Migrations is a migration framework for RavenDB to help with common tasks you might have to do over time to your database. The framework API is heavily influenced by Fluent Migrator</summary>
         <releaseNotes>- Added order by last modified
-- Switch to 24 hour format</releaseNotes>
+- Switch to 24 hour format
+- Added Hotfix</releaseNotes>
         <copyright>Khalid Abuhakmeh 2013</copyright>
         <tags>ravendb, migrations</tags>
         <dependencies>
             <group targetFramework=".NETFramework4.5">
-                <dependency id="RavenDB.Client" version="2.5.2700" />
+                <dependency id="RavenDB.Client" version="[2.5.2700, 3.0)" />
             </group>
         </dependencies>
     </metadata>

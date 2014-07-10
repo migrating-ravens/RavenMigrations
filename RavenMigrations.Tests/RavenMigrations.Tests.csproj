@@ -86,6 +86,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AlterTests.cs" />
+    <Compile Include="HotfixRunnerTests.cs" />
     <Compile Include="RunnerTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
