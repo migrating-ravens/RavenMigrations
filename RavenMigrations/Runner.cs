@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using System.Reflection;
 using Raven.Client;
 
@@ -8,7 +6,7 @@ namespace RavenMigrations
 {
     public class Runner
     {
-        public static void Run(IDocumentStore documentStore, MigrationOptions options = null)
+        public static void Run(IDocumentStore documentStore, MigrationOptions options = null, IMigrationCollector migrationCollector = null)
         {
             if (options == null)
                 options = new MigrationOptions();
@@ -16,7 +14,17 @@ namespace RavenMigrations
             if (!options.Assemblies.Any())
                 options.Assemblies.Add(Assembly.GetCallingAssembly());
 
-            var migrations = FindAllMigrationsWithOptions(options);
+            if (migrationCollector == null)
+                migrationCollector = new AssemblyScannerMigrationCollector(options.MigrationResolver, options.Assemblies);
+            
+            var migrations = migrationCollector.GetOrderedMigrations(options.Profiles);
+
+            // if we are going down, we want to run it in reverse
+            if (options.Direction == Directions.Down)
+                migrations = migrations.OrderByDescending(x => x.Properties.Version);
+            else if(options.Direction == Directions.Up)
+                migrations = migrations.OrderBy(x => x.Properties.Version);
+
 
             foreach (var pair in migrations)
             {
@@ -25,8 +33,8 @@ namespace RavenMigrations
                 migration.Setup(documentStore);
 
                 // todo: possible issue here with sharding
-                var migrationId = 
-                    migration.GetMigrationIdFromName(documentStore.Conventions.IdentityPartsSeparator[0]);
+                var migrationId =
+                    pair.GetMigrationId(documentStore.Conventions.IdentityPartsSeparator[0]);
 
                 using (var session = documentStore.OpenSession())
                 {
@@ -35,6 +43,9 @@ namespace RavenMigrations
                     switch (options.Direction)
                     {
                         case Directions.Down:
+                            // we never ran it
+                            if (migrationDoc == null)
+                                return;
                             migration.Down();
                             session.Delete(migrationDoc);
                             break;
@@ -50,50 +61,10 @@ namespace RavenMigrations
 
                     session.SaveChanges();
 
-                    if (pair.Attribute.Version == options.ToVersion)
+                    if (options.ToVersion != null && pair.Properties.Version == options.ToVersion)
                         break;
                 }
             }
-        }
-
-        /// <summary>
-        /// Returns all migrations found within all assemblies and orders them by the direction
-        /// </summary>
-        /// <param name="options"></param>
-        /// <returns></returns>
-        private static IEnumerable<MigrationWithAttribute> FindAllMigrationsWithOptions(MigrationOptions options)
-        {
-            var migrations = new List<MigrationWithAttribute>();
-            foreach (var assembly in options.Assemblies)
-            {
-                var migrationsFromAssembly =
-                    from t in assembly.GetLoadableTypes()
-                    where typeof(Migration).IsAssignableFrom(t)
-                    select new MigrationWithAttribute
-                    {
-                        Migration = () => options.MigrationResolver.Resolve(t),
-                        Attribute = t.GetMigrationAttribute()
-                    };
-
-                migrations.AddRange(migrationsFromAssembly);
-            }
-
-            var migrationsToRun = from m in migrations
-                                  where IsInCurrentMigrationProfile(m, options)
-                                  orderby m.Attribute.Version
-                                  select m;
-
-            // if we are going down, we want to run it in reverse
-            if (options.Direction == Directions.Down)
-                migrationsToRun = migrationsToRun.OrderByDescending(x => x.Attribute.Version);
-
-            return migrationsToRun;
-        }
-
-        private static bool IsInCurrentMigrationProfile(MigrationWithAttribute migrationWithAttribute, MigrationOptions options)
-        {
-            return string.IsNullOrWhiteSpace(migrationWithAttribute.Attribute.Profile) ||
-            options.Profiles.Any(x => StringComparer.InvariantCultureIgnoreCase.Compare(migrationWithAttribute.Attribute.Profile, x) == 0);
         }
     }
 }

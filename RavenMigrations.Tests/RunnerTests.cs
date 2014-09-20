@@ -3,12 +3,20 @@ using FluentAssertions;
 using Raven.Abstractions.Data;
 using Raven.Client.Indexes;
 using Raven.Tests.Helpers;
+using RavenMigrations.Extensions;
 using Xunit;
 
 namespace RavenMigrations.Tests
 {
     public class RunnerTests : RavenTestBase
     {
+        private readonly IMigrationCollector _collector;
+        public RunnerTests()
+        {
+            _collector = new TypesMigrationCollector(new DefaultMigrationResolver(),
+                new[] {typeof (First_Migration), typeof (Second_Migration), typeof (Development_Migration)});
+        }
+
         [Fact]
         public void Document_id_prefix_is_ravenmigrations()
         {
@@ -18,8 +26,9 @@ namespace RavenMigrations.Tests
         [Fact]
         public void Can_change_migration_document_seperator_to_dash()
         {
-            new First_Migration().GetMigrationIdFromName(seperator: '-')
-                .Should().Be("ravenmigrations-first-migration-1");
+            MigrationWithProperties.FromTypeWithAttribute(typeof (First_Migration), null)
+                .GetMigrationId(seperator: '-')
+                .Should().Be("ravenmigrations-0-1-0-0-first-migration");
         }
 
         [Fact]
@@ -31,16 +40,19 @@ namespace RavenMigrations.Tests
         [Fact]
         public void Can_get_migration_id_from_migration()
         {
-            var id = new First_Migration().GetMigrationIdFromName();
-            id.Should().Be("ravenmigrations/first/migration/1");
+            MigrationWithProperties.FromTypeWithAttribute(typeof (First_Migration), null)
+                .GetMigrationId()
+                .Should().Be("ravenmigrations/0/1/0/0/first/migration");
         }
 
         [Fact]
-        public void Can_get_migration_attribute_from_migration_type()
+        public void Can_get_migration_properties_from_migration_type()
         {
-            var attribute = typeof(First_Migration).GetMigrationAttribute();
-            attribute.Should().NotBeNull();
-            attribute.Version.Should().Be(1);
+            var properties = MigrationWithProperties.FromTypeWithAttribute(typeof(First_Migration), null)
+                .Properties;
+            properties.Should().NotBeNull();
+            properties.Version.Major.Should().Be(0);
+            properties.Version.Minor.Should().Be(1);
         }
 
         [Fact]
@@ -72,7 +84,7 @@ namespace RavenMigrations.Tests
             {
                 new TestDocumentIndex().Execute(store);
 
-                Runner.Run(store);
+                Runner.Run(store, migrationCollector: _collector);
                 WaitForIndexing(store);
 
                 using (var session = store.OpenSession())
@@ -91,9 +103,9 @@ namespace RavenMigrations.Tests
             {
                 new TestDocumentIndex().Execute(store);
 
-                Runner.Run(store);
+                Runner.Run(store, migrationCollector: _collector);
                 // oooops, twice!
-                Runner.Run(store);
+                Runner.Run(store, migrationCollector: _collector);
                 WaitForIndexing(store);
 
                 using (var session = store.OpenSession())
@@ -112,7 +124,7 @@ namespace RavenMigrations.Tests
             {
                 new TestDocumentIndex().Execute(store);
 
-                Runner.Run(store);
+                Runner.Run(store, migrationCollector: _collector);
 
                 WaitForIndexing(store);
 
@@ -120,7 +132,7 @@ namespace RavenMigrations.Tests
                 Runner.Run(store, new MigrationOptions
                 {
                     Direction = Directions.Down
-                });
+                }, _collector);
 
                 WaitForIndexing(store);
                 using (var session = store.OpenSession())
@@ -139,7 +151,7 @@ namespace RavenMigrations.Tests
             {
                 new TestDocumentIndex().Execute(store);
 
-                Runner.Run(store, new MigrationOptions() { ToVersion = 1 });
+                Runner.Run(store, new MigrationOptions() {ToVersion = new MigrationVersion(0, 1)}, _collector);
                 WaitForIndexing(store);
 
                 using (var session = store.OpenSession())
@@ -161,15 +173,15 @@ namespace RavenMigrations.Tests
             {
                 new TestDocumentIndex().Execute(store);
 
-                Runner.Run(store);
+                Runner.Run(store, migrationCollector: _collector);
                 WaitForIndexing(store);
 
                 // migrate down to 
                 Runner.Run(store, new MigrationOptions
                 {
                     Direction = Directions.Down,
-                    ToVersion = 2
-                });
+                    ToVersion = new MigrationVersion(0, 2)
+                }, _collector);
 
                 using (var session = store.OpenSession())
                 {
@@ -178,11 +190,13 @@ namespace RavenMigrations.Tests
                         .Should().Be(1);
 
                     var secondMigrationDocument =
-                        session.Load<MigrationDocument>(new Second_Migration().GetMigrationIdFromName());
+                        session.Load<MigrationDocument>(MigrationWithProperties.FromTypeWithAttribute(typeof(Second_Migration), null)
+                            .GetMigrationId());
                     secondMigrationDocument.Should().BeNull();
 
                     var firstMigrationDocument =
-                        session.Load<MigrationDocument>(new First_Migration().GetMigrationIdFromName());
+                        session.Load<MigrationDocument>(MigrationWithProperties.FromTypeWithAttribute(typeof(First_Migration), null)
+                        .GetMigrationId());
                     firstMigrationDocument.Should().NotBeNull();
                 }
             }
@@ -195,7 +209,8 @@ namespace RavenMigrations.Tests
             {
                 new TestDocumentIndex().Execute(store);
 
-                Runner.Run(store, new MigrationOptions { Profiles = new[] { "development" } });
+                Runner.Run(store, new MigrationOptions { Profiles = new[] { "development" } },
+                    _collector);
                 WaitForIndexing(store);
 
                 using (var session = store.OpenSession())
@@ -213,7 +228,7 @@ namespace RavenMigrations.Tests
             {
                 new TestDocumentIndex().Execute(store);
 
-                Runner.Run(store);
+                Runner.Run(store, migrationCollector: _collector);
                 WaitForIndexing(store);
 
                 using (var session = store.OpenSession())
@@ -254,6 +269,7 @@ namespace RavenMigrations.Tests
 
         public override void Down()
         {
+            DocumentStore.WaitForIndexing();
             DocumentStore.DatabaseCommands.DeleteByIndex(new TestDocumentIndex().IndexName, new IndexQuery());
         }
     }

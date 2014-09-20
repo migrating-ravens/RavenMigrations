@@ -12,13 +12,13 @@ namespace RavenMigrations
             Profiles = new List<string>();
             MigrationResolver = new DefaultMigrationResolver();
             Assemblies = new List<Assembly>();
-            ToVersion = 0;
+            ToVersion = null;
         }
 
         public Directions Direction { get; set; }
         public IList<Assembly> Assemblies { get; set; }
         public IList<string> Profiles { get; set; }
         public IMigrationResolver MigrationResolver { get; set; }
-        public long ToVersion { get; set; }
+        public MigrationVersion ToVersion { get; set; }
     }
 }
