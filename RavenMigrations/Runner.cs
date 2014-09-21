@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Reflection;
 using Raven.Client;
 
@@ -39,6 +40,10 @@ namespace RavenMigrations
                 using (var session = documentStore.OpenSession())
                 {
                     var migrationDoc = session.Load<MigrationDocument>(migrationId);
+                    if (migrationDoc != null && migrationDoc.HasError && !migrationDoc.Error.IsFixed)
+                    {
+                        return;
+                    }
 
                     switch (options.Direction)
                     {
@@ -53,9 +58,19 @@ namespace RavenMigrations
                             // we already ran it
                             if (migrationDoc != null)
                                 continue;
+                            var migrationDocument = new MigrationDocument { Id = migrationId };
+                            session.Store(migrationDocument);
 
-                            migration.Up();
-                            session.Store(new MigrationDocument { Id = migrationId });
+                            try
+                            {
+                                migration.Up();
+                            }
+                            catch (Exception e)
+                            {
+                                migrationDocument.CaptureException(e, options.Direction);
+                                session.SaveChanges();
+                                return;
+                            }
                             break;
                     }
 

@@ -239,6 +239,81 @@ namespace RavenMigrations.Tests
                 }
             }
         }
+
+        [Fact]
+        public void When_exception_occurs_no_more_steps_are_executed_and_exception_is_stored()
+        {
+            var collector = new TypesMigrationCollector(new DefaultMigrationResolver(),
+                new[] {typeof (Failing_Migration), typeof (Fifth_Migration)});
+
+            using (var store = NewDocumentStore())
+            {
+                Runner.Run(store, migrationCollector: collector);
+                using (var session = store.OpenSession())
+                {
+                    var failingMigrationDoc = session.Load<MigrationDocument>(
+                        MigrationWithProperties.FromTypeWithAttribute(typeof (Failing_Migration), null).GetMigrationId());
+                    failingMigrationDoc
+                        .Should().NotBeNull();
+                    failingMigrationDoc.HasError.Should().BeTrue();
+                    failingMigrationDoc.Error.Should().NotBeNull();
+                    failingMigrationDoc.Error.IsFixed.Should().BeFalse();
+                    failingMigrationDoc.Error.Direction.Should().Be(Directions.Up);
+                    failingMigrationDoc.Error.Exception.Should().NotBeNull();
+                    failingMigrationDoc.Error.Message.Should().NotBeBlank();
+
+                    session.Load<MigrationDocument>(
+                        MigrationWithProperties.FromTypeWithAttribute(typeof (Fifth_Migration), null).GetMigrationId())
+                        .Should().BeNull();
+                }
+            }
+        }
+
+        [Fact]
+        public void When_there_is_a_failing_migration_do_not_run_more_migrations()
+        {
+            var collector = new TypesMigrationCollector(new DefaultMigrationResolver(),
+                new[] {typeof (Failing_Migration), typeof (Fifth_Migration)});
+
+            using (var store = NewDocumentStore())
+            {
+                Runner.Run(store, migrationCollector: collector);
+                Runner.Run(store, migrationCollector: collector);
+                using (var session = store.OpenSession())
+                {
+                    session.Load<MigrationDocument>(
+                        MigrationWithProperties.FromTypeWithAttribute(typeof (Fifth_Migration), null).GetMigrationId())
+                        .Should().BeNull();
+                }
+            }
+        }
+        
+        [Fact]
+        public void After_fixing_a_migration_next_migrations_run()
+        {
+            var collector = new TypesMigrationCollector(new DefaultMigrationResolver(),
+                new[] {typeof (Failing_Migration), typeof (Fifth_Migration)});
+
+            using (var store = NewDocumentStore())
+            {
+                Runner.Run(store, migrationCollector: collector);
+                using (var session = store.OpenSession())
+                {
+                    session.Load<MigrationDocument>(
+                        MigrationWithProperties.FromTypeWithAttribute(typeof(Failing_Migration), null).GetMigrationId())
+                        .Error.IsFixed = true;
+                    session.SaveChanges();
+                }
+
+                Runner.Run(store, migrationCollector: collector);
+                using (var session = store.OpenSession())
+                {
+                    session.Load<MigrationDocument>(
+                        MigrationWithProperties.FromTypeWithAttribute(typeof (Fifth_Migration), null).GetMigrationId())
+                        .Should().NotBeNull();
+                }
+            }
+        }
     }
 
     public class TestDocument
@@ -306,6 +381,34 @@ namespace RavenMigrations.Tests
             using (var session = DocumentStore.OpenSession())
             {
                 session.Store(new { Id = "development-1" });
+                session.SaveChanges();
+            }
+        }
+    }
+
+    [Migration(4)]
+    public class Failing_Migration : Migration
+    {
+        public override void Up()
+        {
+            using (var session = DocumentStore.OpenSession())
+            {
+                // fake a migration that will blow up
+                var instance = session.Load<dynamic>("non-existing-id");
+                instance.Name = instance.Name + " changed";
+                session.SaveChanges();
+            }
+        }
+    }
+
+    [Migration(5)]
+    public class Fifth_Migration : Migration
+    {
+        public override void Up()
+        {
+            using (var session = DocumentStore.OpenSession())
+            {
+                session.Store(new {Id = "forth-migration-document"});
                 session.SaveChanges();
             }
         }
