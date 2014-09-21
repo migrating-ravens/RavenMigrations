@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using FluentAssertions;
+using Raven.Abstractions.Data;
 using Raven.Abstractions.Indexing;
 using Raven.Client.Indexes;
 using Raven.Tests.Helpers;
@@ -9,12 +10,6 @@ namespace RavenMigrations.Tests
 {
     public class PatchMigrationTests : RavenTestBase
     {
-
-        public PatchMigrationTests()
-        {
-
-        }
-
         [Fact]
         public void Patch_runs_only_for_the_given_entity_type()
         {
@@ -52,8 +47,39 @@ namespace RavenMigrations.Tests
                     otherSampleDocument.Name.Should().Be("woot");
                 }
             }
+        }        
+        
+        [Fact]
+        public void Can_run_patch_on_index()
+        {
+            var collector = new TypesMigrationCollector(new DefaultMigrationResolver(),
+                   new[] { typeof(PatchByIndex) });
+
+            using (var store = NewDocumentStore())
+            {
+                new SampleDocIndex().Execute(store);
+                using (var session = store.OpenSession())
+                {
+                    session.Store(new SampleDoc{Id = "first-doc", Name ="Ali baba"});
+                    session.Store(new SampleDoc{Id = "second-doc", Name ="Aqui baba"});
+                    session.Store(new SampleDoc{Id = "third-doc", Name ="Ali bebe"});
+                    session.SaveChanges();
+                }
+
+                Runner.Run(store, migrationCollector: collector);
+                using (var session = store.OpenSession())
+                {
+                    session.Load<SampleDoc>("first-doc")
+                        .Name.Should().Be("Ali baba patched");
+                    session.Load<SampleDoc>("second-doc")
+                        .Name.Should().Be("Aqui baba");
+                    session.Load<SampleDoc>("third-doc")
+                        .Name.Should().Be("Ali bebe patched");
+                }
+            }
         }
     }
+
 
 
     internal class SampleDoc
@@ -66,6 +92,19 @@ namespace RavenMigrations.Tests
     {
         public string Id { get; set; }
         public string Name { get; set; }
+    }
+
+    class SampleDocIndex : AbstractIndexCreationTask<SampleDoc>
+    {
+        public SampleDocIndex()
+        {
+            Map = docs => from doc in docs
+                select new
+                {
+                    doc.Name
+                };
+            Index(doc => doc.Name, FieldIndexing.Analyzed);
+        }
     }
 
     [Migration(1)]
@@ -83,7 +122,7 @@ namespace RavenMigrations.Tests
     }
 
     [Migration(2)]
-    internal class PatchDocument : EntityPatchMigration<SampleDoc>
+    internal class PatchDocument : CollectionPatchMigration<SampleDoc>
     {
         public override string UpPatch
         {
@@ -97,6 +136,21 @@ this.Name = this.Name + ' patched';
             get { return @"
 this.Name = this.Name.replace(' patched','');
 "; }
+        }
+    }
+
+    [Migration(3)]
+    internal class PatchByIndex : PatchMigration<SampleDocIndex>
+    {
+        public override string UpPatch
+        {
+            get { return @"
+this.Name = this.Name + ' patched'"; }
+        }
+
+        protected override string Query
+        {
+            get { return "Name:Ali*"; }
         }
     }
 }
