@@ -52,6 +52,7 @@
     <Compile Include="AttributeBasedMigrationCollector.cs" />
     <Compile Include="DefaultMigrationResolver.cs" />
     <Compile Include="Directions.cs" />
+    <Compile Include="EntityPatchMigration.cs" />
     <Compile Include="Extensions\MigrationExtensions.cs" />
     <Compile Include="IMigrationCollector.cs" />
     <Compile Include="IMigrationResolver.cs" />

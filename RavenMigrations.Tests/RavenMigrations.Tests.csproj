@@ -87,6 +87,7 @@
   <ItemGroup>
     <Compile Include="AlterTests.cs" />
     <Compile Include="MigrationVersionTests.cs" />
+    <Compile Include="PatchMigrationTests.cs" />
     <Compile Include="RunnerTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
