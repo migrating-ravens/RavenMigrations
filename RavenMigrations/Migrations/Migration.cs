@@ -2,7 +2,7 @@
 using RavenMigrations.Extensions;
 using RavenMigrations.Verbs;
 
-namespace RavenMigrations
+namespace RavenMigrations.Migrations
 {
     public abstract class Migration
     {

@@ -4,6 +4,7 @@ using Raven.Abstractions.Data;
 using Raven.Client.Indexes;
 using Raven.Tests.Helpers;
 using RavenMigrations.Extensions;
+using RavenMigrations.Migrations;
 using Xunit;
 
 namespace RavenMigrations.Tests

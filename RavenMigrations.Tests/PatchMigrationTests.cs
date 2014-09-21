@@ -4,6 +4,7 @@ using Raven.Abstractions.Data;
 using Raven.Abstractions.Indexing;
 using Raven.Client.Indexes;
 using Raven.Tests.Helpers;
+using RavenMigrations.Migrations;
 using Xunit;
 
 namespace RavenMigrations.Tests
@@ -140,7 +141,7 @@ this.Name = this.Name.replace(' patched','');
     }
 
     [Migration(3)]
-    internal class PatchByIndex : PatchMigration<SampleDocIndex>
+    internal class PatchByIndex : IndexPatchMigration<SampleDocIndex>
     {
         public override string UpPatch
         {

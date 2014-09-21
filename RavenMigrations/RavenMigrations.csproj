@@ -52,12 +52,13 @@
     <Compile Include="AttributeBasedMigrationCollector.cs" />
     <Compile Include="DefaultMigrationResolver.cs" />
     <Compile Include="Directions.cs" />
-    <Compile Include="CollectionPatchMigration.cs" />
+    <Compile Include="Migrations\CollectionPatchMigration.cs" />
     <Compile Include="Extensions\MigrationExtensions.cs" />
     <Compile Include="IMigrationCollector.cs" />
     <Compile Include="IMigrationResolver.cs" />
     <Compile Include="MigrationAttribute.cs" />
-    <Compile Include="Migration.cs" />
+    <Compile Include="Migrations\IndexPatchMigration.cs" />
+    <Compile Include="Migrations\Migration.cs" />
     <Compile Include="MigrationDocument.cs" />
     <Compile Include="MigrationOptions.cs" />
     <Compile Include="MigrationProperties.cs" />

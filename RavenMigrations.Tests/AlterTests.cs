@@ -5,6 +5,7 @@ using Raven.Client;
 using Raven.Client.Indexes;
 using Raven.Json.Linq;
 using Raven.Tests.Helpers;
+using RavenMigrations.Migrations;
 using Xunit;
 
 namespace RavenMigrations.Tests
