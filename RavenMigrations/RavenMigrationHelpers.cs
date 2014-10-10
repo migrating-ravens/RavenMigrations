@@ -35,14 +35,12 @@ namespace RavenMigrations
                 .OfType<MigrationAttribute>()
                 .FirstOrDefault();
             if (attribute == null) return null;
-            // don't change version to int
-            if (attribute.Version > int.MaxValue) throw new Exception(string.Format("Version number too high (max : {0})", int.MaxValue));
 
             return new MigrationProperties()
             {
                 Profile = attribute.Profile,
                 // use 0 as a major to ease moving from original attribute version
-                Version = new MigrationVersion(0, (int)attribute.Version)
+                Version = new MigrationVersion(0, attribute.Version)
             };
         }
 
