@@ -1,21 +1,33 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
+using RavenMigrations.Migrations;
 
 namespace RavenMigrations
 {
-    public abstract class AttributeBasedMigrationCollector : IMigrationCollector
+    public  class AttributeBasedMigrationCollector : IMigrationCollector
     {
-        private IMigrationResolver _resolver;
+        /// <summary>
+        /// Helper to build up assembly scanners 
+        /// </summary>
+        public static Func<IEnumerable<Assembly>, Func<IEnumerable<Type>>> AssemblyScannerBuilder =
+            assemblies =>
+                () =>
+                    assemblies.SelectMany(a => a.GetLoadableTypes().Where(t => typeof (Migration).IsAssignableFrom(t)));
 
-        public AttributeBasedMigrationCollector(IMigrationResolver resolver)
+        private readonly IMigrationResolver _resolver;
+        private readonly Func<IEnumerable<Type>> _migrationTypeCollector;
+
+        public AttributeBasedMigrationCollector(IMigrationResolver resolver, Func<IEnumerable<Type>> migrationTypeCollector)
         {
             _resolver = resolver;
+            _migrationTypeCollector = migrationTypeCollector;
         }
 
         public IEnumerable<MigrationWithProperties> GetOrderedMigrations(IEnumerable<string> profiles)
         {
-            var migrationsToRun = from m in GetMigrationTypes()
+            var migrationsToRun = from m in _migrationTypeCollector()
                 .Select(t => MigrationWithProperties.FromTypeWithAttribute(t, _resolver))
                 where IsInCurrentMigrationProfile(m, profiles)
                 select m;
@@ -27,8 +39,5 @@ namespace RavenMigrations
             return string.IsNullOrWhiteSpace(migrationWithProperties.Properties.Profile) ||
                    profiles.Any(x => StringComparer.InvariantCultureIgnoreCase.Compare(migrationWithProperties.Properties.Profile, x) == 0);
         }
-
-        protected abstract IEnumerable<Type> GetMigrationTypes();
-
     }
 }

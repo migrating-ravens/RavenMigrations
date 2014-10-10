@@ -14,8 +14,8 @@ namespace RavenMigrations.Tests
         [Fact]
         public void Patch_runs_only_for_the_given_entity_type()
         {
-            var collector = new TypesMigrationCollector(new DefaultMigrationResolver(),
-                new[] {typeof (CreateDocument), typeof (PatchDocument)});
+            var collector = new AttributeBasedMigrationCollector(new DefaultMigrationResolver(),
+                () => new[] {typeof (CreateDocument), typeof (PatchDocument)});
 
             using (var store = NewDocumentStore())
             {
@@ -33,8 +33,8 @@ namespace RavenMigrations.Tests
         [Fact]
         public void Can_run_patch_down()
         {
-            var collector = new TypesMigrationCollector(new DefaultMigrationResolver(),
-                   new[] { typeof(CreateDocument), typeof(PatchDocument) });
+            var collector = new AttributeBasedMigrationCollector(new DefaultMigrationResolver(),
+                   () => new[] { typeof(CreateDocument), typeof(PatchDocument) });
 
             using (var store = NewDocumentStore())
             {
@@ -53,8 +53,8 @@ namespace RavenMigrations.Tests
         [Fact]
         public void Can_run_patch_on_index()
         {
-            var collector = new TypesMigrationCollector(new DefaultMigrationResolver(),
-                   new[] { typeof(PatchByIndex) });
+            var collector = new AttributeBasedMigrationCollector(new DefaultMigrationResolver(),
+                   () => new[] { typeof(PatchByIndex) });
 
             using (var store = NewDocumentStore())
             {

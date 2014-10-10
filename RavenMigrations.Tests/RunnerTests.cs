@@ -14,8 +14,8 @@ namespace RavenMigrations.Tests
         private readonly IMigrationCollector _collector;
         public RunnerTests()
         {
-            _collector = new TypesMigrationCollector(new DefaultMigrationResolver(),
-                new[] {typeof (First_Migration), typeof (Second_Migration), typeof (Development_Migration)});
+            _collector = new AttributeBasedMigrationCollector(new DefaultMigrationResolver(),
+                () => new[] {typeof (First_Migration), typeof (Second_Migration), typeof (Development_Migration)});
         }
 
         [Fact]
@@ -243,8 +243,8 @@ namespace RavenMigrations.Tests
         [Fact]
         public void When_exception_occurs_no_more_steps_are_executed_and_exception_is_stored()
         {
-            var collector = new TypesMigrationCollector(new DefaultMigrationResolver(),
-                new[] {typeof (Failing_Migration), typeof (Fifth_Migration)});
+            var collector = new AttributeBasedMigrationCollector(new DefaultMigrationResolver(),
+                () => new[] {typeof (Failing_Migration), typeof (Fifth_Migration)});
 
             using (var store = NewDocumentStore())
             {
@@ -272,8 +272,8 @@ namespace RavenMigrations.Tests
         [Fact]
         public void When_there_is_a_failing_migration_do_not_run_more_migrations()
         {
-            var collector = new TypesMigrationCollector(new DefaultMigrationResolver(),
-                new[] {typeof (Failing_Migration), typeof (Fifth_Migration)});
+            var collector = new AttributeBasedMigrationCollector(new DefaultMigrationResolver(),
+                () => new[] {typeof (Failing_Migration), typeof (Fifth_Migration)});
 
             using (var store = NewDocumentStore())
             {
@@ -291,8 +291,8 @@ namespace RavenMigrations.Tests
         [Fact]
         public void After_fixing_a_migration_next_migrations_run()
         {
-            var collector = new TypesMigrationCollector(new DefaultMigrationResolver(),
-                new[] {typeof (Failing_Migration), typeof (Fifth_Migration)});
+            var collector = new AttributeBasedMigrationCollector(new DefaultMigrationResolver(),
+                () => new[] {typeof (Failing_Migration), typeof (Fifth_Migration)});
 
             using (var store = NewDocumentStore())
             {

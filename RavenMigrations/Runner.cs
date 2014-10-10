@@ -16,7 +16,8 @@ namespace RavenMigrations
                 options.Assemblies.Add(Assembly.GetCallingAssembly());
 
             if (migrationCollector == null)
-                migrationCollector = new AssemblyScannerMigrationCollector(options.MigrationResolver, options.Assemblies);
+                migrationCollector = new AttributeBasedMigrationCollector(options.MigrationResolver,
+                    AttributeBasedMigrationCollector.AssemblyScannerBuilder(options.Assemblies));
             
             var migrations = migrationCollector.GetOrderedMigrations(options.Profiles);
 
