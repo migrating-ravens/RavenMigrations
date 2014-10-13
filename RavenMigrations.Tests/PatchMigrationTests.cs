@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using System.Text;
 using FluentAssertions;
 using Raven.Abstractions.Data;
 using Raven.Abstractions.Indexing;
@@ -26,6 +27,25 @@ namespace RavenMigrations.Tests
                     sampleDocument.Name.Should().Be("woot patched");
                     var otherSampleDocument = session.Load<OtherSampleDoc>("other-sample-document");
                     otherSampleDocument.Name.Should().Be("woot");
+                }
+            }
+        }
+
+        [Fact]
+        public void Bad_patches_should_cause_errors()
+        {
+            var collector = new AttributeBasedMigrationCollector(new DefaultMigrationResolver(),
+                () => new[] {typeof (CreateDocument), typeof (BlowUp)});
+
+            using (var store = NewDocumentStore())
+            {
+                Runner.Run(store, migrationCollector: collector);
+                using (var session = store.OpenSession())
+                {
+                    var migration = collector.GetOrderedMigrations(new string[] {}).Last();
+
+                    var sampleDocument = session.Load<MigrationDocument>(migration.GetMigrationId());
+                    Assert.True(sampleDocument.HasError);
                 }
             }
         }
@@ -136,6 +156,17 @@ this.Name = this.Name + ' patched';
         {
             get { return @"
 this.Name = this.Name.replace(' patched','');
+"; }
+        }
+    }
+    
+    [Migration(4)]
+    internal class BlowUp : CollectionPatchMigration<SampleDoc>
+    {
+        public override string UpPatch
+        {
+            get { return @"
+WillBlowUp().Something();
 "; }
         }
     }
