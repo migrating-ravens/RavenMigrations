@@ -2,6 +2,7 @@
 using System.Text;
 using FluentAssertions;
 using Raven.Abstractions.Data;
+using Raven.Abstractions.Extensions;
 using Raven.Abstractions.Indexing;
 using Raven.Client.Indexes;
 using Raven.Tests.Helpers;
@@ -38,6 +39,26 @@ namespace RavenMigrations.Tests
                 () => new[] {typeof (CreateDocument), typeof (BlowUp)});
 
             using (var store = NewDocumentStore())
+            {
+                Runner.Run(store, migrationCollector: collector);
+                using (var session = store.OpenSession())
+                {
+                    var migration = collector.GetOrderedMigrations(new string[] {}).Last();
+
+                    var sampleDocument = session.Load<MigrationDocument>(migration.GetMigrationId());
+                    Assert.True(sampleDocument.HasError);
+                }
+            }
+        }
+        [Fact]
+        public void Good_patch_on_bad_data_should_cause_errors()
+        {
+            var collector = new AttributeBasedMigrationCollector(new DefaultMigrationResolver(),
+                () => new[] { typeof(CreateHundredDocsAndTwo), typeof(PatchDocumentNameToUpper) });
+
+            // for this test to really work we need a remote store 
+            // so that we need to wait for completion of the patch
+            using (var store = NewRemoteDocumentStore())
             {
                 Runner.Run(store, migrationCollector: collector);
                 using (var session = store.OpenSession())
@@ -141,6 +162,24 @@ namespace RavenMigrations.Tests
             }
         }
     }
+    
+    [Migration(1)]
+    internal class CreateHundredDocsAndTwo : Migration
+    {
+        public override void Up()
+        {
+            using (var session = DocumentStore.OpenSession())
+            {
+                Enumerable.Range(0, 100)
+                    .Select(i => new SampleDoc() {Id = "sample-document-" + i, Name = "doc id " + i})
+                    .ForEach(d => session.Store(d));
+
+                session.Store(new SampleDoc {Id = "sample-document-no-name", Name = null});
+                session.Store(new SampleDoc {Id = "sample-document-with-name", Name = "name"});
+                session.SaveChanges();
+            }
+        }
+    }
 
     [Migration(2)]
     internal class PatchDocument : CollectionPatchMigration<SampleDoc>
@@ -149,6 +188,24 @@ namespace RavenMigrations.Tests
         {
             get { return @"
 this.Name = this.Name + ' patched';
+"; }
+        }
+
+        public override string DownPatch
+        {
+            get { return @"
+this.Name = this.Name.replace(' patched','');
+"; }
+        }
+    }
+    
+    [Migration(2)]
+    internal class PatchDocumentNameToUpper : CollectionPatchMigration<SampleDoc>
+    {
+        public override string UpPatch
+        {
+            get { return @"
+this.Name = this.Name.ToUpper() + ' patched';
 "; }
         }
 

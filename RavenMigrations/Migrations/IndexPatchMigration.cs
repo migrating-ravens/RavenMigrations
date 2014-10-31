@@ -1,3 +1,4 @@
+using System;
 using Raven.Abstractions.Data;
 using RavenMigrations.Extensions;
 
@@ -28,7 +29,10 @@ namespace RavenMigrations.Migrations
                 new ScriptedPatchRequest
                 {
                     Script = UpPatch
-                });
+                })
+                // by waiting for completion any error that ocurrs while the docs are being patched
+                // gets propagated up.
+                .WaitForCompletion();
         }
 
         public override void Down()
