@@ -1,13 +1,19 @@
-﻿using System.Linq;
+﻿using System;
+using System.Configuration;
+using System.Linq;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using FluentAssertions;
 using Raven.Abstractions.Data;
 using Raven.Abstractions.Extensions;
 using Raven.Abstractions.Indexing;
 using Raven.Client.Indexes;
+using Raven.Database.Tasks;
 using Raven.Tests.Helpers;
 using RavenMigrations.Migrations;
 using Xunit;
+using Task = System.Threading.Tasks.Task;
 
 namespace RavenMigrations.Tests
 {
@@ -118,6 +124,46 @@ namespace RavenMigrations.Tests
                     session.Load<SampleDoc>("third-doc")
                         .Name.Should().Be("Ali bebe patched");
                 }
+            }
+        }
+
+        [Fact]
+        public void TimesoutWhenPatchingInsteadOfHanging()
+        {
+
+            var collector = new AttributeBasedMigrationCollector(new DefaultMigrationResolver(),
+                   () => new[] { typeof(PatchByIndex) });
+
+            using (var store = NewDocumentStore())
+            {
+                new SampleDocIndex().Execute(store);
+                using (var session = store.OpenSession())
+                {
+                    session.Store(new SampleDoc {Id = "first-doc", Name = "Ali baba"});
+                    session.SaveChanges();
+                }
+
+            var token = new CancellationToken();
+                var savingTask = System.Threading.Tasks.Task.Factory.StartNew(() =>
+                {
+                    int i = 1;
+                    while (!token.IsCancellationRequested)
+                    {
+                        using (var s = store.OpenSession())
+                        {
+                            s.Load<SampleDoc>("first-doc").Name = "Ali baba " + i;
+                            s.Load<SampleDoc>("first-doc").Name = "Ali baba " + i;
+                            s.SaveChanges();
+                        }
+                        //System.Threading.Thread.Sleep(100);
+                    }
+                }, token);
+
+                var upgradingTask = Task.Factory.StartNew(() =>
+                {
+                    Runner.Run(store, migrationCollector: collector);
+                }, token);
+                Assert.True(upgradingTask.Wait(TimeSpan.FromSeconds(20)));
             }
         }
     }

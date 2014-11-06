@@ -23,7 +23,7 @@ namespace RavenMigrations.Migrations
 
         public override void Up()
         {
-            DocumentStore.WaitForIndexing();
+            DocumentStore.WaitForIndexingOf(IndexName);
             DocumentStore.DatabaseCommands.UpdateByIndex(IndexName,
                 IndexQuery,
                 new ScriptedPatchRequest
@@ -39,7 +39,7 @@ namespace RavenMigrations.Migrations
         {
             if (string.IsNullOrWhiteSpace(DownPatch)) return;
 
-            DocumentStore.WaitForIndexing();
+            DocumentStore.WaitForIndexingOf(IndexName);
             DocumentStore.DatabaseCommands.UpdateByIndex(IndexName,
                 IndexQuery,
                 new ScriptedPatchRequest
