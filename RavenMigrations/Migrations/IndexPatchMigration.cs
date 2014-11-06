@@ -6,6 +6,11 @@ namespace RavenMigrations.Migrations
 {
     public abstract class IndexPatchMigration : Migration
     {
+        protected IndexPatchMigration()
+        {
+            IndexingTimeout = TimeSpan.FromMinutes(5); 
+        }
+
         public abstract string UpPatch { get; }
         public virtual string DownPatch { get { return null; } }
 
@@ -19,11 +24,13 @@ namespace RavenMigrations.Migrations
             }
         }
 
+        protected TimeSpan IndexingTimeout { get; set; }
+
         protected abstract string Query { get; }
 
         public override void Up()
         {
-            DocumentStore.WaitForIndexingOf(IndexName);
+            DocumentStore.WaitForIndexingOf(IndexName, IndexingTimeout);
             DocumentStore.DatabaseCommands.UpdateByIndex(IndexName,
                 IndexQuery,
                 new ScriptedPatchRequest
@@ -39,7 +46,7 @@ namespace RavenMigrations.Migrations
         {
             if (string.IsNullOrWhiteSpace(DownPatch)) return;
 
-            DocumentStore.WaitForIndexingOf(IndexName);
+            DocumentStore.WaitForIndexingOf(IndexName, IndexingTimeout);
             DocumentStore.DatabaseCommands.UpdateByIndex(IndexName,
                 IndexQuery,
                 new ScriptedPatchRequest
