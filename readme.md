@@ -109,7 +109,7 @@ We understand there are times when you want to run specific migrations in certai
 Raven Migrations lets you migrate at the **RavenJObject** level, giving full access to the document and metadata.  This closely follows [Ayende's](https://github.com/ayende) approach porting the [MVC Music Store](http://ayende.com/blog/4519/porting-mvc-music-store-to-raven-advanced-migrations).  
 
 #### Alter.Collection
-```Alter.Collection``` works on a collection and gives access to the document and metadata:
+`Alter.Collection` works on a collection and gives access to the document and metadata:
 
 ```
 Alter.Collection("People", (doc, metadata) => { ... });
@@ -120,7 +120,7 @@ Batching changes is taken care of with the default batch size being 128.  You ca
 public void Collection(string tag, Action<RavenJObject, RavenJObject> action, int pageSize = 128)
 ```
 
-#### Example 1
+##### Example 1
 Let's say you start using a single property:
 
 ```
@@ -204,6 +204,102 @@ Let's say that you refactor and move ```Person``` to another assembly.  So that 
         }
     }
 ```
+
+#### Patch Migrations
+
+Instead of manipulating data client side, you can use RavenDB's scripted patch support to patch either entire collections (using `CollectionPatchMigration<TDoc>`) or filtered by an index (using `IndexPatchMigration<TIndexCreator>`), all server side.
+
+Both have `UpPatch` and `DownPatch`, with `IndexPatchMigration` requiring a query which will filter the items from the index.
+
+`IndexPatchMigration` and `CollectionPathcMigration` will wait for the corresponding index to finish indexing before running the migration.
+
+The runner will also wait for the migration to finish in order to collect any errors that occur, which, depending on the amount of data to be patched, might take some time.
+
+##### Example
+
+```
+    class PatchDocumentNameToUpper : CollectionPatchMigration<SampleDoc>
+    {
+        public override string UpPatch
+        {
+            get { return @"
+this.Name = this.Name.ToUpper() + ' patched';
+"; }
+        }
+
+        public override string DownPatch
+        {
+            get { return @"
+this.Name = this.Name.replace(' patched','');
+"; }
+        }
+    }
+```
+
+This will patch all documents of the `SampleDoc` collection, uppercase the name and add the string ' patched' to it. 
+`Down` only removes the patched string, as there's no way to know what the previous casing was.
+
+```
+    class PatchByIndex : IndexPatchMigration<SampleDocIndex>
+    {
+        public override string UpPatch
+        {
+            get { return @"
+this.Name = this.Name + ' patched'"; }
+        }
+
+        protected override string Query
+        {
+            get { return "Name:Ali*"; }
+        }
+    }
+```
+
+Here we're also patching the name property, but only for documents on the `SampleDocIndex` starting with Ali.
+
+More examples are available on the [tests][RavenMigrations.Tests/PatchMigrationTests.cs]
+
+#### Alternate Numbering Scheme
+
+Instead of using a timestamp for migrations, you can use sequencial quads of numbers, like Migration(1,2,3,4), which allows for different branches of development to proceed, and split migrations between versions.
+
+#### Versions by convention
+
+By using the alternate migration collector ```NameBasedMigrationCollector``` classes that inherits from ```Migration``` can be picked up automatically from assemblies, and the version will be inferred from the namespace and class name.
+
+This does not yet support profiles.
+
+##### Example
+
+You can have folders named `v1` and `v2` , and inside each have several migrations:
+
+```
+namespace RavenMigrations.Tests.Migrations.v1
+{
+    public class M1_First : Migration
+    {
+        public override void Up() { }
+    }
+    public class M1_1_Second : Migration
+    {
+        public override void Up() { }
+    }
+    public class M2_Third : Migration
+    {
+        public override void Up() { }
+    }
+}
+
+namespace RavenMigrations.Tests.Migrations.v2
+{
+    public class M1_Last : Migration
+    {
+        public override void Up() { }
+    }
+}
+```
+
+In this example the major version is picked up from the namespace and minor version is picked up from the class name. [The tests][RavenMigrations.Tests/VersionFromNameTests.cs] serve as a spec for this, as you can have other version components coming from the namespace.
 
 ## Integration
 
