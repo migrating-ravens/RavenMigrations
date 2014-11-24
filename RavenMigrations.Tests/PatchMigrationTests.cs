@@ -75,6 +75,27 @@ namespace RavenMigrations.Tests
                     Assert.True(sampleDocument.HasError);
                 }
             }
+        }        
+        
+        [Fact]
+        public void Good_patch_via_patch_request_on_bad_data_should_cause_errors()
+        {
+            var collector = new AttributeBasedMigrationCollector(new DefaultMigrationResolver(),
+                () => new[] { typeof(CreateHundredDocsAndTwo), typeof(PatchDocumentNameByPatchRequest) });
+
+            // for this test to really work we need a remote store 
+            // so that we need to wait for completion of the patch
+            using (var store = NewRemoteDocumentStore())
+            {
+                Runner.Run(store, migrationCollector: collector);
+                using (var session = store.OpenSession())
+                {
+                    var migration = collector.GetOrderedMigrations(new string[] {}).Last();
+
+                    var sampleDocument = session.Load<MigrationDocument>(migration.GetMigrationId());
+                    Assert.True(sampleDocument.HasError);
+                }
+            }
         }
 
         [Fact]
@@ -260,6 +281,27 @@ this.Name = this.Name.ToUpper() + ' patched';
             get { return @"
 this.Name = this.Name.replace(' patched','');
 "; }
+        }
+    }    
+    
+    [Migration(2)]
+    internal class PatchDocumentNameByPatchRequest : Migration
+    {
+        public override void Up()
+        {
+            WaitForIndexing();
+            DocumentStore.DatabaseCommands.UpdateByIndex(new RavenDocumentsByEntityName().IndexName,
+                new IndexQuery() {Query = "Tag:" + DocumentStore.Conventions.GetTypeTagName(typeof (SampleDoc))},
+                new[]
+                {
+                    new PatchRequest()
+                    {
+                        Name = "Name",
+                        Type = PatchCommandType.Add,
+                        Value = "This should fail"
+                    }
+                })
+                .WaitForCompletion();
         }
     }
     
