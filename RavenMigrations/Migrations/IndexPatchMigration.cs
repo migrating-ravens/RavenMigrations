@@ -52,7 +52,8 @@ namespace RavenMigrations.Migrations
                 new ScriptedPatchRequest
                 {
                     Script = DownPatch
-                });
+                })
+                .WaitForCompletion();
         }
     }
 }
