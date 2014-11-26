@@ -94,6 +94,7 @@
     <Compile Include="Migrations\v1\M1_3_Third.cs" />
     <Compile Include="Migrations\v1\M_1_2_Second.cs" />
     <Compile Include="Migrations\v1\M_2_FourthTest.cs" />
+    <Compile Include="Migrations\v2\M1_Last.cs" />
     <Compile Include="MigrationVersionTests.cs" />
     <Compile Include="NameBasedMigrationCollectorTests.cs" />
     <Compile Include="PatchMigrationTests.cs" />
