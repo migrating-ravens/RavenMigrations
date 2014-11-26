@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Raven.Abstractions.Data;
 using RavenMigrations.Extensions;
 
@@ -12,7 +13,16 @@ namespace RavenMigrations.Migrations
         }
 
         public abstract string UpPatch { get; }
+
+        public virtual Dictionary<string, object> UpPatchValues
+        {
+            get { return new Dictionary<string, object>(); }
+        }
         public virtual string DownPatch { get { return null; } }
+        public virtual Dictionary<string, object> DownPatchValues
+        {
+            get { return new Dictionary<string, object>(); }
+        }
 
         protected abstract string IndexName { get; }
 
@@ -35,7 +45,8 @@ namespace RavenMigrations.Migrations
                 IndexQuery,
                 new ScriptedPatchRequest
                 {
-                    Script = UpPatch
+                    Script = UpPatch,
+                    Values = UpPatchValues,
                 })
                 // by waiting for completion any error that ocurrs while the docs are being patched
                 // gets propagated up.
@@ -51,7 +62,8 @@ namespace RavenMigrations.Migrations
                 IndexQuery,
                 new ScriptedPatchRequest
                 {
-                    Script = DownPatch
+                    Script = DownPatch,
+                    Values = DownPatchValues,
                 })
                 .WaitForCompletion();
         }

@@ -1,15 +1,12 @@
 ﻿using System;
-using System.Configuration;
+using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using FluentAssertions;
 using Raven.Abstractions.Data;
 using Raven.Abstractions.Extensions;
 using Raven.Abstractions.Indexing;
 using Raven.Client.Indexes;
-using Raven.Database.Tasks;
 using Raven.Tests.Helpers;
 using RavenMigrations.Migrations;
 using Xunit;
@@ -24,6 +21,25 @@ namespace RavenMigrations.Tests
         {
             var collector = new AttributeBasedMigrationCollector(new DefaultMigrationResolver(),
                 () => new[] {typeof (CreateDocument), typeof (PatchDocument)});
+
+            using (var store = NewDocumentStore())
+            {
+                Runner.Run(store, migrationCollector: collector);
+                using (var session = store.OpenSession())
+                {
+                    var sampleDocument = session.Load<SampleDoc>("sample-document");
+                    sampleDocument.Name.Should().Be("woot patched");
+                    var otherSampleDocument = session.Load<OtherSampleDoc>("other-sample-document");
+                    otherSampleDocument.Name.Should().Be("woot");
+                }
+            }
+        }
+
+        [Fact]
+        public void Can_run_patch_with_values()
+        {
+            var collector = new AttributeBasedMigrationCollector(new DefaultMigrationResolver(),
+                () => new[] {typeof (CreateDocument), typeof (PatchDocumentWithValues)});
 
             using (var store = NewDocumentStore())
             {
@@ -263,6 +279,35 @@ this.Name = this.Name + ' patched';
             get { return @"
 this.Name = this.Name.replace(' patched','');
 "; }
+        }
+    }    
+    
+    [Migration(2)]
+    internal class PatchDocumentWithValues : CollectionPatchMigration<SampleDoc>
+    {
+        public override string UpPatch
+        {
+            get { return @"
+this.Name = this.Name + affix;
+"; }
+        }
+
+        public override Dictionary<string, object> UpPatchValues
+        {
+            get { return new Dictionary<string, object> {{"affix", " patched"}}; }
+        }
+
+        public override string DownPatch
+        {
+            get { return @"
+this.Name = this.Name.replace(affix,'');
+"; }
+        }
+
+
+        public override Dictionary<string, object> DownPatchValues
+        {
+            get { return new Dictionary<string, object> {{"affix", " patched"}}; }
         }
     }
     
