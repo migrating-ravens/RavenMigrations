@@ -22,6 +22,22 @@ namespace RavenMigrations.Verbs
         /// <param name="pageSize">The page size for batching the documents.</param>
         public void Collection(string tag, Action<RavenJObject, RavenJObject> action, int pageSize = 128)
         {
+            SomeOfCollection(tag, (o, jObject) =>
+            {
+                action(o, jObject);
+                return true;
+            }, pageSize);
+        }
+
+        /// <summary>
+        ///     Allows migration of some documents of a collection of documents one document at a time.
+        ///     Since saving a document might be vetoed or have side-effects (due to the versioning bundle), we want to be able to skip saving.
+        /// </summary>
+        /// <param name="tag">The name of the collection.</param>
+        /// <param name="action">The action to migrate a single document and metadata.Returns whether we want to save it or not</param>
+        /// <param name="pageSize">The page size for batching the documents.</param>
+        public void SomeOfCollection(string tag, Func<RavenJObject, RavenJObject, bool> action, int pageSize = 128)
+        {
             var count = 0;
             do
             {
@@ -46,7 +62,7 @@ namespace RavenMigrations.Verbs
                 {
                     var metadata = entity.Value<RavenJObject>("@metadata");
 
-                    action(entity, metadata);
+                    if(!action(entity, metadata)) continue;
 
                     cmds.Add(new PutCommandData
                     {
