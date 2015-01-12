@@ -92,8 +92,9 @@ namespace RavenMigrations
 
         private static bool IsInCurrentMigrationProfile(MigrationWithAttribute migrationWithAttribute, MigrationOptions options)
         {
-            return string.IsNullOrWhiteSpace(migrationWithAttribute.Attribute.Profile) ||
-            options.Profiles.Any(x => StringComparer.InvariantCultureIgnoreCase.Compare(migrationWithAttribute.Attribute.Profile, x) == 0);
+            return migrationWithAttribute.Attribute != null &&
+                   (string.IsNullOrWhiteSpace(migrationWithAttribute.Attribute.Profile) ||
+                    options.Profiles.Any(x => StringComparer.InvariantCultureIgnoreCase.Compare(migrationWithAttribute.Attribute.Profile, x) == 0));
         }
     }
 }
