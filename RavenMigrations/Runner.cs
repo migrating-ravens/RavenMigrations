@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Raven.Client;
+using Raven.Client.Indexes;
 
 namespace RavenMigrations
 {
@@ -68,11 +69,12 @@ namespace RavenMigrations
             {
                 var migrationsFromAssembly =
                     from t in assembly.GetLoadableTypes()
-                    where typeof(Migration).IsAssignableFrom(t)
+                    let attr = t.GetMigrationAttribute()
+                    where typeof(Migration).IsAssignableFrom(t) && attr != null
                     select new MigrationWithAttribute
                     {
                         Migration = () => options.MigrationResolver.Resolve(t),
-                        Attribute = t.GetMigrationAttribute()
+                        Attribute = attr
                     };
 
                 migrations.AddRange(migrationsFromAssembly);

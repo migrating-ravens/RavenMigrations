@@ -223,6 +223,24 @@ namespace RavenMigrations.Tests
                 }
             }
         }
+
+        [Fact]
+        public void Can_call_migrations_that_are_not_direct_subclasses_of_Migration()
+        {
+            using (var store = NewDocumentStore())
+            {
+                new TestDocumentIndex().Execute(store);
+
+                Runner.Run(store, new MigrationOptions {Profiles = new[] {"uses-BaseMigration"}});
+                WaitForIndexing(store);
+
+                using (var session = store.OpenSession())
+                {
+                    var development = session.Load<object>("migrated-using-BaseMigration");
+                    development.Should().NotBeNull();
+                }
+            }
+        }
     }
 
     public class TestDocument
@@ -291,6 +309,26 @@ namespace RavenMigrations.Tests
                 session.Store(new { Id = "development-1" });
                 session.SaveChanges();
             }
+        }
+    }
+
+    [Migration(4, "uses-BaseMigration")]
+    public class Subclass_of_BaseMigration : BaseMigration
+    {
+        public override void Up()
+        {
+            using (var session = DocumentStore.OpenSession())
+            {
+                session.Store(new { Id = "migrated-using-BaseMigration" });
+                session.SaveChanges();
+            }
+        }
+    }    
+
+    public class BaseMigration : Migration
+    {
+        public override void Up()
+        {
         }
     }
 }
