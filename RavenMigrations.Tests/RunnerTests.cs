@@ -36,6 +36,13 @@ namespace RavenMigrations.Tests
         }
 
         [Fact]
+        public void Can_get_migration_id_from_migration_and_correct_leading_or_multiple_underscores()
+        {
+            var id = new _has_problems__with_underscores___().GetMigrationIdFromName();
+            id.Should().Be("ravenmigrations/has/problems/with/underscores/5");
+        }
+
+        [Fact]
         public void Can_get_migration_attribute_from_migration_type()
         {
             var attribute = typeof(First_Migration).GetMigrationAttribute();
@@ -322,6 +329,14 @@ namespace RavenMigrations.Tests
                 session.Store(new { Id = "migrated-using-BaseMigration" });
                 session.SaveChanges();
             }
+        }
+    }    
+
+    [Migration(5, "exclude-me")]
+    public class _has_problems__with_underscores___ : Migration
+    {
+        public override void Up()
+        {
         }
     }    
 
