@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace RavenMigrations
 {
@@ -10,13 +12,24 @@ namespace RavenMigrations
             Version = version;
         }
 
-        public MigrationAttribute(long version, string profile)
+        public MigrationAttribute(long version, string profiles)
             : this(version)
         {
-            Profile = profile;
+            Profiles = profiles;
         }
 
         public long Version { get; set; }
-        public string Profile { get; set; }
+        public string Profiles { get; set; }
+
+        public IList<string> GetIndividualProfiles()
+        {
+            return Profiles == null
+                ? new List<string>()
+                : Profiles
+                    .Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+                    .Select(p => p.Trim())
+                    .Where(p => !string.IsNullOrWhiteSpace(p))
+                    .ToList();
+        }
     }
 }

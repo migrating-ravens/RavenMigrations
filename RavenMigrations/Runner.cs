@@ -92,8 +92,20 @@ namespace RavenMigrations
 
         private static bool IsInCurrentMigrationProfile(MigrationWithAttribute migrationWithAttribute, MigrationOptions options)
         {
-            return string.IsNullOrWhiteSpace(migrationWithAttribute.Attribute.Profile) ||
-            options.Profiles.Any(x => StringComparer.InvariantCultureIgnoreCase.Compare(migrationWithAttribute.Attribute.Profile, x) == 0);
+            if (migrationWithAttribute.Attribute == null)
+                return false;
+
+            //If no particular profiles have been set, then the migration is
+            //effectively a part of all profiles
+            var profiles = migrationWithAttribute.Attribute.GetIndividualProfiles();
+            if (profiles.Any() == false)
+                return true;
+
+            //The migration must belong to at least one of the currently 
+            //specified profiles
+            return options.Profiles
+                .Intersect(migrationWithAttribute.Attribute.GetIndividualProfiles(), StringComparer.OrdinalIgnoreCase)
+                .Any();
         }
     }
 }
