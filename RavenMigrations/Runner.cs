@@ -63,38 +63,26 @@ namespace RavenMigrations
         /// <returns></returns>
         private static IEnumerable<MigrationWithAttribute> FindAllMigrationsWithOptions(MigrationOptions options)
         {
-            var migrations = new List<MigrationWithAttribute>();
-            foreach (var assembly in options.Assemblies)
-            {
-                var migrationsFromAssembly =
-                    from t in assembly.GetLoadableTypes()
-                    where typeof(Migration).IsAssignableFrom(t)
-                    select new MigrationWithAttribute
-                    {
-                        Migration = () => options.MigrationResolver.Resolve(t),
-                        Attribute = t.GetMigrationAttribute()
-                    };
-
-                migrations.AddRange(migrationsFromAssembly);
-            }
-
-            var migrationsToRun = from m in migrations
-                                  where IsInCurrentMigrationProfile(m, options)
-                                  orderby m.Attribute.Version
-                                  select m;
+            var migrationsToRun = 
+                from assembly in options.Assemblies
+                from t in assembly.GetLoadableTypes()
+                where typeof(Migration).IsAssignableFrom(t)
+                select new MigrationWithAttribute
+                {
+                    Migration = () => options.MigrationResolver.Resolve(t),
+                    Attribute = t.GetMigrationAttribute()
+                } into migration
+                where migration.Attribute != null && IsInCurrentMigrationProfile(migration, options)
+                select migration;
 
             // if we are going down, we want to run it in reverse
-            if (options.Direction == Directions.Down)
-                migrationsToRun = migrationsToRun.OrderByDescending(x => x.Attribute.Version);
-
-            return migrationsToRun;
+            return options.Direction == Directions.Down 
+                ? migrationsToRun.OrderByDescending(x => x.Attribute.Version) 
+                : migrationsToRun.OrderBy(x => x.Attribute.Version);
         }
 
         private static bool IsInCurrentMigrationProfile(MigrationWithAttribute migrationWithAttribute, MigrationOptions options)
         {
-            if (migrationWithAttribute.Attribute == null)
-                return false;
-
             //If no particular profiles have been set, then the migration is
             //effectively a part of all profiles
             var profiles = migrationWithAttribute.Attribute.GetIndividualProfiles();
