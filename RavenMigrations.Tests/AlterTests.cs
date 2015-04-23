@@ -1,4 +1,6 @@
-﻿using System.Threading;
+﻿using System;
+using System.Collections.Generic;
+using System.Threading;
 using FluentAssertions;
 using Raven.Abstractions.Data;
 using Raven.Client;
@@ -59,6 +61,36 @@ namespace RavenMigrations.Tests
             }
         }
 
+        [Fact]
+        public void Can_migrate_only_subset()
+        {
+            using (var store = NewDocumentStore())
+            {
+                var lastModifieds = InitialiseWithAnimals(store);
+
+                Thread.Sleep(50);
+
+                var migration = new AlterCollectionSubsetMigration();
+                migration.Setup(store);
+
+                migration.Up();
+                WaitForIndexing(store);
+
+                using (var session = store.OpenSession())
+                {
+                    var animal1 = session.Load<Animal>("Animals/1");
+                    animal1.Name.Should().Be("Lion");
+                    var animal2 = session.Load<Animal>("Animals/2");
+                    animal2.Name.Should().Be("Tiger");
+
+                    var metadata1 = session.Advanced.GetMetadataFor(animal1);
+                    metadata1[Constants.LastModified].Value<DateTime>().Should().NotBe(lastModifieds[0]);
+                    var metadata2 = session.Advanced.GetMetadataFor(animal2);
+                    metadata2[Constants.LastModified].Value<DateTime>().Should().Be(lastModifieds[1]);
+                }
+            }
+        }
+
         private void InitialiseWithPerson(IDocumentStore store, string name)
         {
             new RavenDocumentsByEntityName().Execute(store); //https://groups.google.com/forum/#!topic/ravendb/QqZPrRUwEkE
@@ -68,6 +100,31 @@ namespace RavenMigrations.Tests
                 session.SaveChanges();
             }
             WaitForIndexing(store);
+        }
+
+        private List<DateTime> InitialiseWithAnimals(IDocumentStore store)
+        {
+            var lastModifieds = new List<DateTime>();
+            new RavenDocumentsByEntityName().Execute(store); //https://groups.google.com/forum/#!topic/ravendb/QqZPrRUwEkE
+            using (var session = store.OpenSession())
+            {
+                var animal1 = new Animal { Id = "Animals/1", Name = "Lyon" };
+                var animal2 = new Animal { Id = "Animals/2", Name = "Tiger" };
+                
+                session.Store(animal1);
+                session.Store(animal2);
+
+                session.SaveChanges();
+
+                var metadata1 = session.Advanced.GetMetadataFor(animal1);
+                var metadata2 = session.Advanced.GetMetadataFor(animal2);
+
+                lastModifieds.Add(metadata1[Constants.LastModified].Value<DateTime>());
+                lastModifieds.Add(metadata2[Constants.LastModified].Value<DateTime>());
+            }
+            WaitForIndexing(store);
+
+            return lastModifieds;
         }
     }
 
@@ -109,6 +166,25 @@ namespace RavenMigrations.Tests
         }
     }
 
+    public class AlterCollectionSubsetMigration : Migration
+    {
+        public override void Up()
+        {
+            Alter.CollectionSubset("Animals", MigrateDocument);
+        }
+
+        private bool MigrateDocument(RavenJObject doc, RavenJObject metadata)
+        {
+            if (doc["Name"].Value<string>() == "Lyon")
+            {
+                doc["Name"] = new RavenJValue("Lion");
+                return true;
+            }
+
+            return false;
+        }
+    }
+
     public class Person1
     {
         public string Id { get; set; }
@@ -120,5 +196,11 @@ namespace RavenMigrations.Tests
         public string FirstName { get; set; }
         public string Id { get; set; }
         public string LastName { get; set; }
+    }
+
+    public class Animal
+    {
+        public string Id { get; set; }
+        public string Name { get; set; }
     }
 }

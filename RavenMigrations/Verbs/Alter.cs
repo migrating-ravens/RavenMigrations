@@ -7,6 +7,8 @@ using Raven.Json.Linq;
 
 namespace RavenMigrations.Verbs
 {
+    public delegate bool DocumentMigrator(RavenJObject doc, RavenJObject metadata);
+
     public class Alter
     {
         public Alter(IDocumentStore documentStore)
@@ -15,12 +17,16 @@ namespace RavenMigrations.Verbs
         }
 
         /// <summary>
-        ///     Allows migration of a collection of documents one document at a time.
+        ///     Allows migration of a collection of documents one document at a time, with the ability
+        ///     to skip modifying documents when they don't need it.
         /// </summary>
         /// <param name="tag">The name of the collection.</param>
-        /// <param name="action">The action to migrate a single document and metadata.</param>
+        /// <param name="documentMigrator">
+        /// The function to migrate a single document and metadata. 
+        /// Returns true if the document has been modified and should be saved, false otherwise
+        /// </param>
         /// <param name="pageSize">The page size for batching the documents.</param>
-        public void Collection(string tag, Action<RavenJObject, RavenJObject> action, int pageSize = 128)
+        public void CollectionSubset(string tag, DocumentMigrator documentMigrator, int pageSize = 128)
         {
             QueryHeaderInformation headerInfo;
             var enumerator = DocumentStore.DatabaseCommands.StreamQuery("Raven/DocumentsByEntityName",
@@ -38,7 +44,8 @@ namespace RavenMigrations.Verbs
                 var entity = enumerator.Current;
                 var metadata = entity.Value<RavenJObject>("@metadata");
 
-                action(entity, metadata);
+                if (documentMigrator(entity, metadata) == false)
+                    continue;
 
                 cmds.Add(new PutCommandData
                 {
@@ -56,6 +63,21 @@ namespace RavenMigrations.Verbs
 
             if (cmds.Count > 0)
                 DocumentStore.DatabaseCommands.Batch(cmds.ToArray());
+        }
+
+        /// <summary>
+        ///     Allows migration of a collection of documents one document at a time.
+        /// </summary>
+        /// <param name="tag">The name of the collection.</param>
+        /// <param name="action">The action to migrate a single document and metadata.</param>
+        /// <param name="pageSize">The page size for batching the documents.</param>
+        public void Collection(string tag, Action<RavenJObject, RavenJObject> action, int pageSize = 128)
+        {
+            CollectionSubset(tag, (doc, meta) =>
+            {
+                action(doc, meta);
+                return true;
+            }, pageSize);
         }
 
         protected IDocumentStore DocumentStore { get; private set; }
