@@ -7,6 +7,7 @@ using Raven.Client;
 using Raven.Client.Indexes;
 using Raven.Json.Linq;
 using Raven.Tests.Helpers;
+using RavenMigrations.Verbs;
 using Xunit;
 
 namespace RavenMigrations.Tests
@@ -91,6 +92,38 @@ namespace RavenMigrations.Tests
             }
         }
 
+        [Fact]
+        public void Can_migrate_using_temp_index()
+        {
+            using (var store = NewDocumentStore())
+            {
+                var lastModifieds = InitialiseWithAnimals(store);
+
+                Thread.Sleep(50);
+
+                var migration = new AlterCollectionUsingTempIndexMigration();
+                migration.Setup(store);
+
+                migration.Up();
+                WaitForIndexing(store);
+
+                using (var session = store.OpenSession())
+                {
+                    var animal1 = session.Load<Animal>("Animals/1");
+                    animal1.Name.Should().Be("Lion");
+                    var animal2 = session.Load<Animal>("Animals/2");
+                    animal2.Name.Should().Be("Tiger");
+
+                    var metadata1 = session.Advanced.GetMetadataFor(animal1);
+                    metadata1[Constants.LastModified].Value<DateTime>().Should().NotBe(lastModifieds[0]);
+                    var metadata2 = session.Advanced.GetMetadataFor(animal2);
+                    metadata2[Constants.LastModified].Value<DateTime>().Should().Be(lastModifieds[1]);
+                }
+
+                store.DatabaseCommands.GetIndex(Alter.TemporaryMigrationIndex.Name).Should().BeNull();
+            }
+        }
+
         private void InitialiseWithPerson(IDocumentStore store, string name)
         {
             new RavenDocumentsByEntityName().Execute(store); //https://groups.google.com/forum/#!topic/ravendb/QqZPrRUwEkE
@@ -171,6 +204,32 @@ namespace RavenMigrations.Tests
         public override void Up()
         {
             Alter.CollectionSubset("Animals", MigrateDocument);
+        }
+
+        private bool MigrateDocument(RavenJObject doc, RavenJObject metadata)
+        {
+            if (doc["Name"].Value<string>() == "Lyon")
+            {
+                doc["Name"] = new RavenJValue("Lion");
+                return true;
+            }
+
+            return false;
+        }
+    }
+
+    public class AlterCollectionUsingTempIndexMigration : Migration
+    {
+        public override void Up()
+        {
+            var map = @"
+                from document in docs.Animals
+                select new {
+                    Name = document.Name
+                }
+                ";
+            var query = "Name:Lyon";
+            Alter.DocumentsViaTempIndex(map, query, MigrateDocument);
         }
 
         private bool MigrateDocument(RavenJObject doc, RavenJObject metadata)
