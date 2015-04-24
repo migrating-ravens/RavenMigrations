@@ -9,8 +9,9 @@ namespace RavenMigrations.Verbs
 {
     public class Alter
     {
-        public Alter(IDocumentStore documentStore)
+        public Alter(IDocumentStore documentStore, ILogger logger)
         {
+            Logger = logger;
             DocumentStore = documentStore;
         }
 
@@ -57,9 +58,12 @@ namespace RavenMigrations.Verbs
                 }
 
                 DocumentStore.DatabaseCommands.Batch(cmds.ToArray());
+                Logger.WriteInformation("Updated {0} documents", queryResult.Results.Count);
+
             } while (true);
         }
 
         protected IDocumentStore DocumentStore { get; private set; }
+        protected ILogger Logger { get; private set; }
     }
 }

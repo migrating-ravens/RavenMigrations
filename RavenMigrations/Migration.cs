@@ -10,10 +10,11 @@ namespace RavenMigrations
         {
         }
 
-        public virtual void Setup(IDocumentStore documentStore)
+        public virtual void Setup(IDocumentStore documentStore, ILogger logger)
         {
             DocumentStore = documentStore;
-            Alter = new Alter(documentStore);
+            Logger = logger;
+            Alter = new Alter(documentStore, logger);
         }
 
         public abstract void Up();
@@ -25,5 +26,6 @@ namespace RavenMigrations
 
         protected Alter Alter { get; private set; }
         protected IDocumentStore DocumentStore { get; private set; }
+        protected ILogger Logger { get; private set; }
     }
 }

@@ -22,7 +22,7 @@ namespace RavenMigrations
             {
                 // send in the document Store
                 var migration = pair.Migration();
-                migration.Setup(documentStore);
+                migration.Setup(documentStore, options.Logger);
 
                 // todo: possible issue here with sharding
                 var migrationId = 
@@ -35,16 +35,20 @@ namespace RavenMigrations
                     switch (options.Direction)
                     {
                         case Directions.Down:
+                            options.Logger.WriteInformation("{0}: Down migration started", migration.GetType().Name);
                             migration.Down();
                             session.Delete(migrationDoc);
+                            options.Logger.WriteInformation("{0}: Down migration completed", migration.GetType().Name);
                             break;
                         default:
                             // we already ran it
                             if (migrationDoc != null)
                                 continue;
 
+                            options.Logger.WriteInformation("{0}: Up migration started", migration.GetType().Name);
                             migration.Up();
                             session.Store(new MigrationDocument { Id = migrationId });
+                            options.Logger.WriteInformation("{0}: Up migration completed", migration.GetType().Name);
                             break;
                     }
 
