@@ -1,5 +1,7 @@
 # Raven Migrations
 
+[![Build status](https://ci.appveyor.com/api/projects/status/4emkngqp8xk2k96j?svg=true)](https://ci.appveyor.com/project/dportzline83/ravenmigrations)
+
 ## Quick Start
 
 ```
