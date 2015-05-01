@@ -254,6 +254,7 @@ namespace RavenMigrations.Tests
 
         public override void Down()
         {
+            WaitForIndexing();
             DocumentStore.DatabaseCommands.DeleteByIndex(new TestDocumentIndex().IndexName, new IndexQuery());
         }
     }
