@@ -227,10 +227,15 @@ The advantage to this approach, is that your IDE will order the migrations alpha
 
 1. If you use a domain model in your migration, be prepared for that migration to break if properties are removed critical to the migration. There are ways to be safe about breaking migrations. One approach is to use **RavenJObject** instead of your domain types.
 
+
+## Contributing
+
+Contributions of any size are always welcome! Please read our [Code of Conduct](./CODE_OF_CONDUCT.md) and [Contribution Guide](./CONTRIBUTING.md) and then jump in!
+
 ## Thanks
 
 Thanks goes to [Sean Kearon](https://github.com/seankearon) who helped dog food this migration framework and contribute to it.
 
-## Current Version
+## Versioning
 
-1.0.0 - Initial Release
+This project strives to adhere to the [semver](http://semver.org) guidelines.
