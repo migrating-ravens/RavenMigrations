@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
     <metadata>
         <id>RavenMigrations</id>
-        <version>1.0.1</version>
+        <version>$version$</version>
         <title>Raven Migrations</title>
         <authors>Khalid Abuhakmeh</authors>
         <owners>khalidabuhakmeh</owners>
