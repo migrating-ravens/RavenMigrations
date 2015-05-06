@@ -29,4 +29,6 @@ when submitting or reviewing a pull request.
    detailed style guide becomes necessary, it can be added.
 1. Commits - Provide detailed and properly formatted commit messages. Check out [5
    Useful Tips For A Better Commit Message](https://robots.thoughtbot.com/5-useful-tips-for-a-better-commit-message).
-1. Versioning - Follow the [semver](semver.org) guidelines.
+1. Versioning - The project maintainers should handle releases and version changes
+   associated with them. For more information, see the [maintaining
+   guide](./MAINTAINING.md).
