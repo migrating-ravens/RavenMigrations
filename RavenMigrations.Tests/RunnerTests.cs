@@ -205,11 +205,11 @@ namespace RavenMigrations.Tests
                         .Should().Be(1);
 
                     var secondMigrationDocument =
-                        session.Load<MigrationDocument>(new Second_Migration().GetMigrationIdFromName());
+                        session.Load<MigrationDocument>(RavenMigrationHelpers.GetMigrationIdFromName(new Second_Migration()));
                     secondMigrationDocument.Should().BeNull();
 
                     var firstMigrationDocument =
-                        session.Load<MigrationDocument>(new First_Migration().GetMigrationIdFromName());
+                        session.Load<MigrationDocument>(RavenMigrationHelpers.GetMigrationIdFromName(new First_Migration()));
                     firstMigrationDocument.Should().NotBeNull();
                 }
             }
