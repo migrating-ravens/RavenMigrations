@@ -32,3 +32,6 @@ when submitting or reviewing a pull request.
 1. Versioning - The project maintainers should handle releases and version changes
    associated with them. For more information, see the [maintaining
    guide](./MAINTAINING.md).
+1. Please update the [Change Log](./CHANGELOG.md) for any noteworthy changes. The
+   latest version will appear as [x.x.x] until a maintainer updates it for
+   deployment.
