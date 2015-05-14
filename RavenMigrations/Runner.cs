@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Raven.Client;
+using Raven.Client.Indexes;
 
 namespace RavenMigrations
 {
@@ -66,13 +67,14 @@ namespace RavenMigrations
             var migrationsToRun = 
                 from assembly in options.Assemblies
                 from t in assembly.GetLoadableTypes()
-                where typeof(Migration).IsAssignableFrom(t)
+                let attr = t.GetMigrationAttribute()
+                where typeof(Migration).IsAssignableFrom(t) && attr != null
                 select new MigrationWithAttribute
                 {
                     Migration = () => options.MigrationResolver.Resolve(t),
-                    Attribute = t.GetMigrationAttribute()
+                    Attribute = attr
                 } into migration
-                where migration.Attribute != null && IsInCurrentMigrationProfile(migration, options)
+                where IsInCurrentMigrationProfile(migration, options)
                 select migration;
 
             // if we are going down, we want to run it in reverse

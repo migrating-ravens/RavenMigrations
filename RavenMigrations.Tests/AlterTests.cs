@@ -71,6 +71,7 @@ namespace RavenMigrations.Tests
         }
     }
 
+    [Migration(1, "alter")]
     public class AlterCollectionMigration : Migration
     {
         public override void Down()
