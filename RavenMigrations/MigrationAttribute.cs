@@ -8,28 +8,18 @@ namespace RavenMigrations
     public class MigrationAttribute : Attribute
     {
         public MigrationAttribute(long version)
+            : this(version, null)
         {
-            Version = version;
+            
         }
 
-        public MigrationAttribute(long version, string profiles)
-            : this(version)
+        public MigrationAttribute(long version, params string[] profiles)
         {
-            Profiles = profiles;
+            Version = version;
+            Profiles = profiles ?? Enumerable.Empty<string>();
         }
 
         public long Version { get; set; }
-        public string Profiles { get; set; }
-
-        public IList<string> GetIndividualProfiles()
-        {
-            return Profiles == null
-                ? new List<string>()
-                : Profiles
-                    .Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
-                    .Select(p => p.Trim())
-                    .Where(p => !string.IsNullOrWhiteSpace(p))
-                    .ToList();
-        }
+        public IEnumerable<string> Profiles { get; set; }
     }
 }

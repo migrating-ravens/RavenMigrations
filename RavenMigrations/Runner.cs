@@ -85,14 +85,14 @@ namespace RavenMigrations
         {
             //If no particular profiles have been set, then the migration is
             //effectively a part of all profiles
-            var profiles = migrationWithAttribute.Attribute.GetIndividualProfiles();
+            var profiles = migrationWithAttribute.Attribute.Profiles;
             if (profiles.Any() == false)
                 return true;
 
             //The migration must belong to at least one of the currently 
             //specified profiles
             return options.Profiles
-                .Intersect(migrationWithAttribute.Attribute.GetIndividualProfiles(), StringComparer.OrdinalIgnoreCase)
+                .Intersect(migrationWithAttribute.Attribute.Profiles, StringComparer.OrdinalIgnoreCase)
                 .Any();
         }
     }

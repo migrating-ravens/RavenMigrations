@@ -299,7 +299,7 @@ namespace RavenMigrations.Tests
         }
     }
 
-    [Migration(3, "development, demo")]
+    [Migration(3, "development", "demo")]
     public class Development_Migration : Migration
     {
         public override void Up()
