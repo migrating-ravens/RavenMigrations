@@ -67,12 +67,13 @@ namespace RavenMigrations
             var migrationsToRun = 
                 from assembly in options.Assemblies
                 from t in assembly.GetLoadableTypes()
-                let attr = t.GetMigrationAttribute()
-                where typeof(Migration).IsAssignableFrom(t) && attr != null
+                where typeof(Migration).IsAssignableFrom(t)
+                      && !t.IsAbstract
+                      && t.GetConstructor(Type.EmptyTypes) != null
                 select new MigrationWithAttribute
                 {
                     Migration = () => options.MigrationResolver.Resolve(t),
-                    Attribute = attr
+                    Attribute = t.GetMigrationAttribute()
                 } into migration
                 where IsInCurrentMigrationProfile(migration, options)
                 select migration;
@@ -85,6 +86,12 @@ namespace RavenMigrations
 
         private static bool IsInCurrentMigrationProfile(MigrationWithAttribute migrationWithAttribute, MigrationOptions options)
         {
+            if (migrationWithAttribute.Attribute == null)
+            {
+                throw new InvalidOperationException("Subclasses of Migration that can be instantiated must have the MigrationAttribute." +
+                                                    "If this class was intended as a base class for other migrations, make it an abstract class.");
+            }
+
             //If no particular profiles have been set, then the migration is
             //effectively a part of all profiles
             var profiles = migrationWithAttribute.Attribute.Profiles;

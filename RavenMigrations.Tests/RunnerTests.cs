@@ -344,7 +344,7 @@ namespace RavenMigrations.Tests
         }
     }    
 
-    public class BaseMigration : Migration
+    public abstract class BaseMigration : Migration
     {
         public override void Up()
         {
