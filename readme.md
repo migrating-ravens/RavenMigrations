@@ -105,10 +105,10 @@ We understand there are times when you want to run specific migrations in certai
     Runner.Run(store, new MigrationOptions { Profiles = new[] { "development" } });
 ```
 
-You can also specify that a particular profile belongs in more than one profile by comma-separating the profile names in the attribute.
+You can also specify that a particular profile belongs in more than one profile by setting multiple profile names in the attribute.
 
 ``
-[Migration(3, "development, demo")]
+[Migration(3, "development", "demo")]
 ``
 
 This migration would run if either (or both) the development and demo profiles were specified in the MigrationOptions.
