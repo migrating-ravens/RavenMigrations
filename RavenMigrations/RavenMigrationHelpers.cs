@@ -14,7 +14,7 @@ namespace RavenMigrations
         {
             const char underscore = '_';
             var type = migration.GetType();
-            var idSafeTypeName = Regex.Replace(type.Name, "_{2,}", "_")
+            var idSafeTypeName = Regex.Replace(type.Name, underscore + "{2,}", underscore.ToString())
                 .Trim(underscore);
             var name = idSafeTypeName
                 .Replace(underscore, seperator)
