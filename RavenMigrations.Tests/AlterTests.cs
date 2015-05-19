@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Threading;
 using FluentAssertions;
 using Raven.Abstractions.Commands;
 using Raven.Abstractions.Data;
@@ -48,10 +47,6 @@ namespace RavenMigrations.Tests
                 migration.Setup(store);
 
                 migration.Up();
-                WaitForIndexing(store);
-
-                Thread.SpinWait(100000000);
-
                 using (var session = store.OpenSession())
                 {
                     var customer = session.Load<Person2>("People/1");
@@ -64,7 +59,6 @@ namespace RavenMigrations.Tests
         [Fact]
         public void Can_add_additional_commands_as_part_of_migration()
         {
-            // update the AlterCollectionMigration to return an additional command for a new document
             using (var store = NewDocumentStore())
             {
                 InitialiseWithPerson(store, "Sean Kearon");
@@ -73,9 +67,6 @@ namespace RavenMigrations.Tests
                 migration.Setup(store);
 
                 migration.Up();
-                WaitForIndexing(store);
-
-                Thread.SpinWait(100000000);
 
                 using (var session = store.OpenSession())
                 {
@@ -107,10 +98,10 @@ namespace RavenMigrations.Tests
 
         public override void Up()
         {
-            Alter.Collection("Person1s", MigratePerson1ToPerson2);
+            Alter.CollectionWithAdditionalCommands("Person1s", MigratePerson1ToPerson2);
         }
 
-        private IEnumerable<ICommandData> MigratePerson2ToPerson1(RavenJObject doc, RavenJObject metadata)
+        private void MigratePerson2ToPerson1(RavenJObject doc, RavenJObject metadata)
         {
             var first = doc.Value<string>("FirstName");
             var last = doc.Value<string>("LastName");
@@ -120,8 +111,6 @@ namespace RavenMigrations.Tests
             doc.Remove("LastName");
 
             metadata[Constants.RavenClrType] = "RavenMigrations.Tests.Person1, RavenMigrations.Tests";
-
-            return null;
         }
 
         private IEnumerable<ICommandData> MigratePerson1ToPerson2(RavenJObject doc, RavenJObject metadata)
