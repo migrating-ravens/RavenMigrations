@@ -196,13 +196,31 @@ namespace RavenMigrations.Tests
         }
 
         [Fact]
-        public void Can_call_migrations_with_profile()
+        public void Can_call_migrations_with_development_profile()
         {
             using (var store = NewDocumentStore())
             {
                 new TestDocumentIndex().Execute(store);
 
                 Runner.Run(store, new MigrationOptions { Profiles = new[] { "development" } });
+                WaitForIndexing(store);
+
+                using (var session = store.OpenSession())
+                {
+                    var development = session.Load<object>("development-1");
+                    development.Should().NotBeNull();
+                }
+            }
+        }
+
+        [Fact]
+        public void Can_call_migrations_with_demo_profile()
+        {
+            using (var store = NewDocumentStore())
+            {
+                new TestDocumentIndex().Execute(store);
+
+                Runner.Run(store, new MigrationOptions { Profiles = new[] { "demo" } });
                 WaitForIndexing(store);
 
                 using (var session = store.OpenSession())
@@ -307,7 +325,7 @@ namespace RavenMigrations.Tests
         }
     }
 
-    [Migration(3, "development")]
+    [Migration(3, "development", "demo")]
     public class Development_Migration : Migration
     {
         public override void Up()
@@ -341,7 +359,7 @@ namespace RavenMigrations.Tests
         }
     }    
 
-    public class BaseMigration : Migration
+    public abstract class BaseMigration : Migration
     {
         public override void Up()
         {

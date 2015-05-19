@@ -22,42 +22,40 @@ namespace RavenMigrations.Verbs
         /// <param name="pageSize">The page size for batching the documents.</param>
         public void Collection(string tag, Action<RavenJObject, RavenJObject> action, int pageSize = 128)
         {
-            var count = 0;
-            do
-            {
-                var queryResult = DocumentStore.DatabaseCommands.Query("Raven/DocumentsByEntityName",
-                    new IndexQuery
-                    {
-                        Query = "Tag:" + tag,
-                        PageSize = pageSize,
-                        Start = count,
-                        SortedFields = new[] { new SortedField("LastModified") { Descending = true }, }
-                        //Unless we specify a sort order, the documents will come back in arbitrary order
-                        //which may change between batches.  Need to use LastModified descending rather than
-                        //ascending to ensure we don't start getting docs that have just been changed by migration
-                    },
-                    null);
-
-                if (queryResult.Results.Count == 0) break;
-                
-                count += queryResult.Results.Count;
-                var cmds = new List<ICommandData>();
-                foreach (var entity in queryResult.Results)
+            QueryHeaderInformation headerInfo;
+            var enumerator = DocumentStore.DatabaseCommands.StreamQuery("Raven/DocumentsByEntityName",
+                new IndexQuery
                 {
-                    var metadata = entity.Value<RavenJObject>("@metadata");
+                    Query = "Tag:" + tag,
+                },
+                out headerInfo);
 
-                    action(entity, metadata);
 
-                    cmds.Add(new PutCommandData
-                    {
-                        Document = entity,
-                        Metadata = metadata,
-                        Key = metadata.Value<string>("@id"),
-                    });
+            var cmds = new List<ICommandData>();
+            using (enumerator)
+            while (enumerator.MoveNext())
+            {
+                var entity = enumerator.Current;
+                var metadata = entity.Value<RavenJObject>("@metadata");
+
+                action(entity, metadata);
+
+                cmds.Add(new PutCommandData
+                {
+                    Document = entity,
+                    Metadata = metadata,
+                    Key = metadata.Value<string>("@id"),
+                });
+
+                if (cmds.Count == pageSize)
+                {
+                    DocumentStore.DatabaseCommands.Batch(cmds.ToArray());
+                    cmds.Clear();
                 }
+            }
 
+            if (cmds.Count > 0)
                 DocumentStore.DatabaseCommands.Batch(cmds.ToArray());
-            } while (true);
         }
 
         protected IDocumentStore DocumentStore { get; private set; }
