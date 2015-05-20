@@ -4,6 +4,11 @@ changes. This project adheres to [Semantic Versioning](http://semver.org).
 
 ## [x.x.x]
 
+## [1.2.0]
+- Added new way to change a collection with
+  ```Alter.CollectionWithAdditionalCommands```. This works the same way as
+  ```Collection``` except you can return additional commands from the ```Func```
+  that will be run the in the same transaction as the collection's document.
 
 ## [1.1.0]
 - Fixed - Using a base class for migrations would throw an unhelpful error.
