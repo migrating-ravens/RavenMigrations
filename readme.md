@@ -190,6 +190,23 @@ You now need to migrating your documents or you will lose data when you load you
     }
 ```
 
+#### Alter.CollectionWithAdditionalCommands
+```Alter.CollectionWithAdditionalCommands``` works just like ```Alter.Collection``` except the function you pass to it
+must return an ```IEnumerable<ICommandData>```. These are additional RavenDb commands that will be applied in the same transaction
+as the document of the collection you are modifying. So, if anything goes wrong, you can be sure that no documents of the
+collection were changed without also doing the corresponding "additional" changes. An example scenario: you want to migrate a field
+from one document to a different document. There are two things that need to happen: 1. remove the old field, 2. set the new field
+on the other document. With this helper method, you can batch both of those commands in the same transaction, so they'll both either
+pass or fail together. An example of an additional command:
+
+```
+new PutCommand {
+    Document = new RavenJObject(),
+    Key = "foobar/1",
+    Metadata = new RavenJObject()
+}
+```
+
 #### Working with Metadata
 Let's say that you refactor and move ```Person``` to another assembly.  So that RavenDB will load the data into the new class, you will need to adjust the metadata in the collection for the new CLR type.
 
