@@ -1,5 +1,6 @@
-﻿using System.Threading;
+﻿using System.Collections.Generic;
 using FluentAssertions;
+using Raven.Abstractions.Commands;
 using Raven.Abstractions.Data;
 using Raven.Client;
 using Raven.Client.Indexes;
@@ -46,15 +47,31 @@ namespace RavenMigrations.Tests
                 migration.Setup(store);
 
                 migration.Up();
-                WaitForIndexing(store);
-
-                Thread.SpinWait(100000000);
-
                 using (var session = store.OpenSession())
                 {
                     var customer = session.Load<Person2>("People/1");
                     customer.FirstName.Should().Be("Sean");
                     customer.LastName.Should().Be("Kearon");
+                }
+            }
+        }
+
+        [Fact]
+        public void Can_add_additional_commands_as_part_of_migration()
+        {
+            using (var store = NewDocumentStore())
+            {
+                InitialiseWithPerson(store, "Sean Kearon");
+
+                var migration = new AlterCollectionMigration();
+                migration.Setup(store);
+
+                migration.Up();
+
+                using (var session = store.OpenSession())
+                {
+                    var foobaz = session.Load<FooBaz>(1);
+                    foobaz.Bar.Should().BeEquivalentTo("loaded");
                 }
             }
         }
@@ -81,7 +98,7 @@ namespace RavenMigrations.Tests
 
         public override void Up()
         {
-            Alter.Collection("Person1s", MigratePerson1ToPerson2);
+            Alter.CollectionWithAdditionalCommands("Person1s", MigratePerson1ToPerson2);
         }
 
         private void MigratePerson2ToPerson1(RavenJObject doc, RavenJObject metadata)
@@ -96,7 +113,7 @@ namespace RavenMigrations.Tests
             metadata[Constants.RavenClrType] = "RavenMigrations.Tests.Person1, RavenMigrations.Tests";
         }
 
-        private void MigratePerson1ToPerson2(RavenJObject doc, RavenJObject metadata)
+        private IEnumerable<ICommandData> MigratePerson1ToPerson2(RavenJObject doc, RavenJObject metadata)
         {
             var name = doc.Value<string>("Name");
             if (!string.IsNullOrEmpty(name))
@@ -107,7 +124,31 @@ namespace RavenMigrations.Tests
             doc.Remove("Name");
 
             metadata[Constants.RavenClrType] = "RavenMigrations.Tests.Person2, RavenMigrations.Tests";
+
+            var foobaz = new FooBaz
+            {
+                Id = 1,
+                Bar = "loaded"
+            };
+
+            var foobazDoc = RavenJObject.FromObject(foobaz);
+            var meta = new RavenJObject();
+            meta[Constants.RavenEntityName] = "FooBazs";
+            var cmd = new PutCommandData
+            {
+                Document = foobazDoc,
+                Key = "foobazs/" + foobaz.Id,
+                Metadata = meta
+            };
+
+            return new[] {cmd};
         }
+    }
+
+    public class FooBaz
+    {
+        public int Id { get; set; }
+        public string Bar { get; set; }
     }
 
     public class Person1
