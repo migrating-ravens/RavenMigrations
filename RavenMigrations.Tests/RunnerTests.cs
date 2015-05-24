@@ -36,6 +36,13 @@ namespace RavenMigrations.Tests
         }
 
         [Fact]
+        public void Can_get_migration_id_from_migration_and_correct_leading_or_multiple_underscores()
+        {
+            var id = new _has_problems__with_underscores___().GetMigrationIdFromName();
+            id.Should().Be("ravenmigrations/has/problems/with/underscores/5");
+        }
+
+        [Fact]
         public void Can_get_migration_attribute_from_migration_type()
         {
             var attribute = typeof(First_Migration).GetMigrationAttribute();
@@ -189,13 +196,31 @@ namespace RavenMigrations.Tests
         }
 
         [Fact]
-        public void Can_call_migrations_with_profile()
+        public void Can_call_migrations_with_development_profile()
         {
             using (var store = NewDocumentStore())
             {
                 new TestDocumentIndex().Execute(store);
 
                 Runner.Run(store, new MigrationOptions { Profiles = new[] { "development" } });
+                WaitForIndexing(store);
+
+                using (var session = store.OpenSession())
+                {
+                    var development = session.Load<object>("development-1");
+                    development.Should().NotBeNull();
+                }
+            }
+        }
+
+        [Fact]
+        public void Can_call_migrations_with_demo_profile()
+        {
+            using (var store = NewDocumentStore())
+            {
+                new TestDocumentIndex().Execute(store);
+
+                Runner.Run(store, new MigrationOptions { Profiles = new[] { "demo" } });
                 WaitForIndexing(store);
 
                 using (var session = store.OpenSession())
@@ -220,6 +245,24 @@ namespace RavenMigrations.Tests
                 {
                     var development = session.Load<object>("development-1");
                     development.Should().BeNull();
+                }
+            }
+        }
+
+        [Fact]
+        public void Can_call_migrations_that_are_not_direct_subclasses_of_Migration()
+        {
+            using (var store = NewDocumentStore())
+            {
+                new TestDocumentIndex().Execute(store);
+
+                Runner.Run(store, new MigrationOptions {Profiles = new[] {"uses-BaseMigration"}});
+                WaitForIndexing(store);
+
+                using (var session = store.OpenSession())
+                {
+                    var development = session.Load<object>("migrated-using-BaseMigration");
+                    development.Should().NotBeNull();
                 }
             }
         }
@@ -254,6 +297,7 @@ namespace RavenMigrations.Tests
 
         public override void Down()
         {
+            WaitForIndexing();
             DocumentStore.DatabaseCommands.DeleteByIndex(new TestDocumentIndex().IndexName, new IndexQuery());
         }
     }
@@ -281,7 +325,7 @@ namespace RavenMigrations.Tests
         }
     }
 
-    [Migration(3, "development")]
+    [Migration(3, "development", "demo")]
     public class Development_Migration : Migration
     {
         public override void Up()
@@ -291,6 +335,34 @@ namespace RavenMigrations.Tests
                 session.Store(new { Id = "development-1" });
                 session.SaveChanges();
             }
+        }
+    }
+
+    [Migration(4, "uses-BaseMigration")]
+    public class Subclass_of_BaseMigration : BaseMigration
+    {
+        public override void Up()
+        {
+            using (var session = DocumentStore.OpenSession())
+            {
+                session.Store(new { Id = "migrated-using-BaseMigration" });
+                session.SaveChanges();
+            }
+        }
+    }    
+
+    [Migration(5, "exclude-me")]
+    public class _has_problems__with_underscores___ : Migration
+    {
+        public override void Up()
+        {
+        }
+    }    
+
+    public abstract class BaseMigration : Migration
+    {
+        public override void Up()
+        {
         }
     }
 }

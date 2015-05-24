@@ -1,5 +1,9 @@
 # Raven Migrations
 
+[![Join the chat at https://gitter.im/migrating-ravens/RavenMigrations](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/migrating-ravens/RavenMigrations?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
+[![Build status](https://ci.appveyor.com/api/projects/status/4emkngqp8xk2k96j?svg=true)](https://ci.appveyor.com/project/dportzline83/ravenmigrations)
+
 ## Quick Start
 
 ```
@@ -105,6 +109,14 @@ We understand there are times when you want to run specific migrations in certai
     Runner.Run(store, new MigrationOptions { Profiles = new[] { "development" } });
 ```
 
+You can also specify that a particular profile belongs in more than one profile by setting multiple profile names in the attribute.
+
+``
+[Migration(3, "development", "demo")]
+``
+
+This migration would run if either (or both) the development and demo profiles were specified in the MigrationOptions.
+
 ### Advanced Migrations
 Raven Migrations lets you migrate at the **RavenJObject** level, giving full access to the document and metadata.  This closely follows [Ayende's](https://github.com/ayende) approach porting the [MVC Music Store](http://ayende.com/blog/4519/porting-mvc-music-store-to-raven-advanced-migrations).  
 
@@ -178,6 +190,23 @@ You now need to migrating your documents or you will lose data when you load you
     }
 ```
 
+#### Alter.CollectionWithAdditionalCommands
+```Alter.CollectionWithAdditionalCommands``` works just like ```Alter.Collection``` except the function you pass to it
+must return an ```IEnumerable<ICommandData>```. These are additional RavenDb commands that will be applied in the same transaction
+as the document of the collection you are modifying. So, if anything goes wrong, you can be sure that no documents of the
+collection were changed without also doing the corresponding "additional" changes. An example scenario: you want to migrate a field
+from one document to a different document. There are two things that need to happen: 1. remove the old field, 2. set the new field
+on the other document. With this helper method, you can batch both of those commands in the same transaction, so they'll both either
+pass or fail together. An example of an additional command:
+
+```
+new PutCommand {
+    Document = new RavenJObject(),
+    Key = "foobar/1",
+    Metadata = new RavenJObject()
+}
+```
+
 #### Working with Metadata
 Let's say that you refactor and move ```Person``` to another assembly.  So that RavenDB will load the data into the new class, you will need to adjust the metadata in the collection for the new CLR type.
 
@@ -227,10 +256,17 @@ The advantage to this approach, is that your IDE will order the migrations alpha
 
 1. If you use a domain model in your migration, be prepared for that migration to break if properties are removed critical to the migration. There are ways to be safe about breaking migrations. One approach is to use **RavenJObject** instead of your domain types.
 
+
+## Contributing
+
+Contributions of any size are always welcome! Please read our [Code of Conduct](./CODE_OF_CONDUCT.md) and [Contribution Guide](./CONTRIBUTING.md) and then jump in!
+
 ## Thanks
 
 Thanks goes to [Sean Kearon](https://github.com/seankearon) who helped dog food this migration framework and contribute to it.
 
-## Current Version
+## Versioning
 
-1.0.0 - Initial Release
+This project strives to adhere to the [semver](http://semver.org) guidelines. See the [contributing](./CONTRIBUTING.md) and [maintaining](./MAINTAINING.md)
+guides for more on this.
+

@@ -2,8 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
+using System.Text.RegularExpressions;
 
 namespace RavenMigrations
 {
@@ -13,10 +12,12 @@ namespace RavenMigrations
 
         public static string GetMigrationIdFromName(this Migration migration, char seperator = '/')
         {
+            const char underscore = '_';
             var type = migration.GetType();
-            var name = type
-                .Name.Replace('_', seperator)
-                .TrimEnd(new[] { seperator })
+            var idSafeTypeName = Regex.Replace(type.Name, underscore + "{2,}", underscore.ToString())
+                .Trim(underscore);
+            var name = idSafeTypeName
+                .Replace(underscore, seperator)
                 .ToLowerInvariant();
             var version = type.GetMigrationAttribute().Version;
 

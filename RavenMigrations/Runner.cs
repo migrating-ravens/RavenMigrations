@@ -67,37 +67,45 @@ namespace RavenMigrations
         /// <returns></returns>
         private static IEnumerable<MigrationWithAttribute> FindAllMigrationsWithOptions(MigrationOptions options)
         {
-            var migrations = new List<MigrationWithAttribute>();
-            foreach (var assembly in options.Assemblies)
-            {
-                var migrationsFromAssembly =
-                    from t in assembly.GetLoadableTypes()
-                    where typeof(Migration).IsAssignableFrom(t)
-                    select new MigrationWithAttribute
-                    {
-                        Migration = () => options.MigrationResolver.Resolve(t),
-                        Attribute = t.GetMigrationAttribute()
-                    };
-
-                migrations.AddRange(migrationsFromAssembly);
-            }
-
-            var migrationsToRun = from m in migrations
-                                  where IsInCurrentMigrationProfile(m, options)
-                                  orderby m.Attribute.Version
-                                  select m;
+            var migrationsToRun = 
+                from assembly in options.Assemblies
+                from t in assembly.GetLoadableTypes()
+                where typeof(Migration).IsAssignableFrom(t)
+                      && !t.IsAbstract
+                      && t.GetConstructor(Type.EmptyTypes) != null
+                select new MigrationWithAttribute
+                {
+                    Migration = () => options.MigrationResolver.Resolve(t),
+                    Attribute = t.GetMigrationAttribute()
+                } into migration
+                where IsInCurrentMigrationProfile(migration, options)
+                select migration;
 
             // if we are going down, we want to run it in reverse
-            if (options.Direction == Directions.Down)
-                migrationsToRun = migrationsToRun.OrderByDescending(x => x.Attribute.Version);
-
-            return migrationsToRun;
+            return options.Direction == Directions.Down 
+                ? migrationsToRun.OrderByDescending(x => x.Attribute.Version) 
+                : migrationsToRun.OrderBy(x => x.Attribute.Version);
         }
 
         private static bool IsInCurrentMigrationProfile(MigrationWithAttribute migrationWithAttribute, MigrationOptions options)
         {
-            return string.IsNullOrWhiteSpace(migrationWithAttribute.Attribute.Profile) ||
-            options.Profiles.Any(x => StringComparer.InvariantCultureIgnoreCase.Compare(migrationWithAttribute.Attribute.Profile, x) == 0);
+            if (migrationWithAttribute.Attribute == null)
+            {
+                throw new InvalidOperationException("Subclasses of Migration that can be instantiated must have the MigrationAttribute." +
+                                                    "If this class was intended as a base class for other migrations, make it an abstract class.");
+            }
+
+            //If no particular profiles have been set, then the migration is
+            //effectively a part of all profiles
+            var profiles = migrationWithAttribute.Attribute.Profiles;
+            if (profiles.Any() == false)
+                return true;
+
+            //The migration must belong to at least one of the currently 
+            //specified profiles
+            return options.Profiles
+                .Intersect(migrationWithAttribute.Attribute.Profiles, StringComparer.OrdinalIgnoreCase)
+                .Any();
         }
     }
 }

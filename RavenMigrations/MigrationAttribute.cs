@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace RavenMigrations
 {
@@ -6,17 +8,18 @@ namespace RavenMigrations
     public class MigrationAttribute : Attribute
     {
         public MigrationAttribute(long version)
+            : this(version, null)
         {
-            Version = version;
+            
         }
 
-        public MigrationAttribute(long version, string profile)
-            : this(version)
+        public MigrationAttribute(long version, params string[] profiles)
         {
-            Profile = profile;
+            Version = version;
+            Profiles = profiles ?? Enumerable.Empty<string>();
         }
 
         public long Version { get; set; }
-        public string Profile { get; set; }
+        public IEnumerable<string> Profiles { get; set; }
     }
 }
