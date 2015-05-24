@@ -67,9 +67,7 @@ namespace RavenMigrations.Tests
         {
             using (var store = NewDocumentStore())
             {
-                var lastModifieds = InitialiseWithAnimals(store);
-
-                Thread.Sleep(50);
+                var etags = InitialiseWithAnimals(store);
 
                 var migration = new AlterCollectionSubsetMigration();
                 migration.Setup(store);
@@ -84,10 +82,10 @@ namespace RavenMigrations.Tests
                     var animal2 = session.Load<Animal>("Animals/2");
                     animal2.Name.Should().Be("Tiger");
 
-                    var metadata1 = session.Advanced.GetMetadataFor(animal1);
-                    metadata1[Constants.LastModified].Value<DateTime>().Should().NotBe(lastModifieds[0]);
-                    var metadata2 = session.Advanced.GetMetadataFor(animal2);
-                    metadata2[Constants.LastModified].Value<DateTime>().Should().Be(lastModifieds[1]);
+                    var etag1 = session.Advanced.GetEtagFor(animal1);
+                    etag1.Should().NotBe(etags[0]);
+                    var etag2 = session.Advanced.GetEtagFor(animal2);
+                    etag2.Should().Be(etags[1]);
                 }
             }
         }
@@ -97,9 +95,7 @@ namespace RavenMigrations.Tests
         {
             using (var store = NewDocumentStore())
             {
-                var lastModifieds = InitialiseWithAnimals(store);
-
-                Thread.Sleep(50);
+                var etags = InitialiseWithAnimals(store);
 
                 var migration = new AlterCollectionUsingTempIndexMigration();
                 migration.Setup(store);
@@ -114,10 +110,10 @@ namespace RavenMigrations.Tests
                     var animal2 = session.Load<Animal>("Animals/2");
                     animal2.Name.Should().Be("Tiger");
 
-                    var metadata1 = session.Advanced.GetMetadataFor(animal1);
-                    metadata1[Constants.LastModified].Value<DateTime>().Should().NotBe(lastModifieds[0]);
-                    var metadata2 = session.Advanced.GetMetadataFor(animal2);
-                    metadata2[Constants.LastModified].Value<DateTime>().Should().Be(lastModifieds[1]);
+                    var etag1 = session.Advanced.GetEtagFor(animal1);
+                    etag1.Should().NotBe(etags[0]);
+                    var etag2 = session.Advanced.GetEtagFor(animal2);
+                    etag2.Should().Be(etags[1]);
                 }
 
                 store.DatabaseCommands.GetIndex(Alter.TemporaryMigrationIndex.Name).Should().BeNull();
@@ -135,9 +131,9 @@ namespace RavenMigrations.Tests
             WaitForIndexing(store);
         }
 
-        private List<DateTime> InitialiseWithAnimals(IDocumentStore store)
+        private List<Etag> InitialiseWithAnimals(IDocumentStore store)
         {
-            var lastModifieds = new List<DateTime>();
+            var etags = new List<Etag>();
             new RavenDocumentsByEntityName().Execute(store); //https://groups.google.com/forum/#!topic/ravendb/QqZPrRUwEkE
             using (var session = store.OpenSession())
             {
@@ -149,15 +145,15 @@ namespace RavenMigrations.Tests
 
                 session.SaveChanges();
 
-                var metadata1 = session.Advanced.GetMetadataFor(animal1);
-                var metadata2 = session.Advanced.GetMetadataFor(animal2);
+                var etag1 = session.Advanced.GetEtagFor(animal1);
+                var etag2 = session.Advanced.GetEtagFor(animal2);
 
-                lastModifieds.Add(metadata1[Constants.LastModified].Value<DateTime>());
-                lastModifieds.Add(metadata2[Constants.LastModified].Value<DateTime>());
+                etags.Add(etag1);
+                etags.Add(etag2);
             }
             WaitForIndexing(store);
 
-            return lastModifieds;
+            return etags;
         }
     }
 
