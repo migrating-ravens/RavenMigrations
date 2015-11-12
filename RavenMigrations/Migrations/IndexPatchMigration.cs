@@ -36,18 +36,26 @@ namespace RavenMigrations.Migrations
 
         protected TimeSpan IndexingTimeout { get; set; }
 
+        protected virtual BulkOperationOptions GetOperationOptions()
+        {
+            return new BulkOperationOptions
+            {
+                StaleTimeout = IndexingTimeout
+            };
+        }
+
         protected abstract string Query { get; }
 
         public override void Up()
         {
-            DocumentStore.WaitForIndexingOf(IndexName, IndexingTimeout);
             DocumentStore.DatabaseCommands.UpdateByIndex(IndexName,
                 IndexQuery,
                 new ScriptedPatchRequest
                 {
                     Script = UpPatch,
                     Values = UpPatchValues,
-                })
+                },
+                GetOperationOptions())
                 // by waiting for completion any error that ocurrs while the docs are being patched
                 // gets propagated up.
                 .WaitForCompletion();
@@ -56,15 +64,15 @@ namespace RavenMigrations.Migrations
         public override void Down()
         {
             if (string.IsNullOrWhiteSpace(DownPatch)) return;
-
-            DocumentStore.WaitForIndexingOf(IndexName, IndexingTimeout);
+            
             DocumentStore.DatabaseCommands.UpdateByIndex(IndexName,
                 IndexQuery,
                 new ScriptedPatchRequest
                 {
                     Script = DownPatch,
                     Values = DownPatchValues,
-                })
+                },
+                GetOperationOptions())
                 .WaitForCompletion();
         }
     }

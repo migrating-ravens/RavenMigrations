@@ -165,9 +165,8 @@ namespace RavenMigrations.Tests
         }
 
         [Fact]
-        public void TimesoutWhenPatchingInsteadOfHanging()
+        public void Timesout_when_patching_instead_of_hanging()
         {
-
             var collector = new AttributeBasedMigrationCollector(new DefaultMigrationResolver(),
                    () => new[] { typeof(PatchByIndex) });
 
@@ -180,15 +179,14 @@ namespace RavenMigrations.Tests
                     session.SaveChanges();
                 }
 
-            var token = new CancellationToken();
-                var savingTask = System.Threading.Tasks.Task.Factory.StartNew(() =>
+                var token = new CancellationToken();
+                Task.Factory.StartNew(() =>
                 {
                     int i = 1;
                     while (!token.IsCancellationRequested)
                     {
                         using (var s = store.OpenSession())
                         {
-                            s.Load<SampleDoc>("first-doc").Name = "Ali baba " + i;
                             s.Load<SampleDoc>("first-doc").Name = "Ali baba " + i;
                             s.SaveChanges();
                         }
@@ -203,9 +201,44 @@ namespace RavenMigrations.Tests
                 Assert.True(upgradingTask.Wait(TimeSpan.FromSeconds(20)));
             }
         }
+
+        [Fact]
+        public void Waits_for_indexing_instead_of_failing()
+        {
+
+            var collector = new AttributeBasedMigrationCollector(new DefaultMigrationResolver(),
+                   () => new[] { typeof(PatchByIndex) });
+            using (var store = NewDocumentStore())
+            {
+                new SampleDocIndex().Execute(store);
+
+                store.DatabaseCommands.Admin.StopIndexing();
+                using (var session = store.OpenSession())
+                {
+                    session.Store(new SampleDoc {Id = "first-doc", Name = "Ali baba"});
+                    session.SaveChanges();
+                }
+
+                Task.Delay(TimeSpan.FromMilliseconds(500))
+                    .ContinueWith(t => store.DatabaseCommands.Admin.StartIndexing());
+
+                Runner.Run(store, migrationCollector: collector);
+
+                using (var session = store.OpenSession())
+                {
+                    var migrationId = collector.GetOrderedMigrations(new string[] {}).Single().GetMigrationId();
+                    var migrationDocument = session.Load<MigrationDocument>(migrationId);
+                    if(migrationDocument != null && migrationDocument.Error != null)
+                    {
+                        Assert.Null(migrationDocument.Error.Message);
+                    }
+
+                    session.Load<SampleDoc>("first-doc")
+                        .Name.Should().Be("Ali baba patched");
+                }
+            }
+        }
     }
-
-
 
     internal class SampleDoc
     {
