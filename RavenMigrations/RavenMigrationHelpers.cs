@@ -29,7 +29,7 @@ namespace RavenMigrations
         public static MigrationAttribute GetMigrationAttribute(this Type type)
         {
             var attribute = Attribute.GetCustomAttributes(type)
-                .FirstOrDefault(x => x.GetType().IsAssignableFrom(typeof(MigrationAttribute)));
+                .FirstOrDefault(x => x is MigrationAttribute);
             return (MigrationAttribute)attribute;
         }
 
