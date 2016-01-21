@@ -10,6 +10,8 @@ changes. This project adheres to [Semantic Versioning](http://semver.org).
   versions of Raven ignore multiple separators and others do not. This change
   could cause migrations to be run multiple times in some cases if the ids are not
   changed first.
+- Added - Ability to inherit from `MigrationAttribute` to specify custom migration
+  versions.
 
 ## [1.2.0]
 - Added new way to change a collection with

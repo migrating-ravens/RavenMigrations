@@ -266,6 +266,24 @@ namespace RavenMigrations.Tests
                 }
             }
         }
+        
+        [Fact]
+        public void Can_call_migrations_with_custom_attributes()
+        {
+            using (var store = NewDocumentStore())
+            {
+                new TestDocumentIndex().Execute(store);
+
+                Runner.Run(store);
+                WaitForIndexing(store);
+
+                using (var session = store.OpenSession())
+                {
+                    var customMigration = session.Load<object>("migrated-using-custom-migration-attribute");
+                    customMigration.Should().NotBeNull();
+                }
+            }
+        }
     }
 
     public class TestDocument
@@ -359,10 +377,37 @@ namespace RavenMigrations.Tests
         }
     }    
 
+    [MigrationVersion(6, 0, 0, 0)]
+    public class Uses_Custom_Migration_Attribute : Migration
+    {
+        public override void Up()
+        {
+            using (var session = DocumentStore.OpenSession())
+            {
+                session.Store(new { Id = "migrated-using-custom-migration-attribute" });
+                session.SaveChanges();
+            }
+        }
+    }    
+
     public abstract class BaseMigration : Migration
     {
         public override void Up()
         {
+        }
+    }
+
+    public class MigrationVersionAttribute : MigrationAttribute
+    {
+        public MigrationVersionAttribute(int major, int minor, int patch, int migration, params string [] profiles)
+            :base(CreateVersionNumber(major, minor, patch, migration), profiles)
+        {
+            
+        }
+
+        private static long CreateVersionNumber(int major, int minor, int patch, int migration)
+        {
+            return major*1000000000000L + minor*100000000L + patch*1000000L + migration;
         }
     }
 }
