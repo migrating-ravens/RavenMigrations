@@ -7,7 +7,7 @@ assembly_info:
   assembly_file_version: $(core_version)
   assembly_informational_version: $(core_version)
 environment:
-  core_version: 1.2.0
+  core_version: 2.0.0
 nuget:
   disable_publish_on_pr: true
 build:
