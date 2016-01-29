@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using FluentAssertions;
 using Raven.Abstractions.Data;
 using Raven.Client.Indexes;
@@ -284,6 +285,21 @@ namespace RavenMigrations.Tests
                 }
             }
         }
+
+        [Fact]
+        public void Migrations_log()
+        {
+            var logHistory = new List<string>();
+
+            using (var store = NewDocumentStore())
+            {
+                Runner.Run(store, new MigrationOptions { Profiles = new[] { "logs" }, Logger = s => logHistory.Add(s)});
+            }
+
+            logHistory.Count.Should().Be(2);
+            logHistory[0].Should().Be("Test log message 1");
+            logHistory[1].Should().Be("Test log message 2");
+        }
     }
 
     public class TestDocument
@@ -375,7 +391,17 @@ namespace RavenMigrations.Tests
         public override void Up()
         {
         }
-    }    
+    }
+
+    [Migration(5, "logs")]
+    public class Logs : Migration
+    {
+        public override void Up()
+        {
+            Log("Test log message 1");
+            Log("Test log message 2");
+        }
+    }
 
     [MigrationVersion(6, 0, 0, 0)]
     public class Uses_Custom_Migration_Attribute : Migration

@@ -3,6 +3,10 @@ All notable changes will be documented in this file, particularly any breaking
 changes. This project adheres to [Semantic Versioning](http://semver.org).
 
 ## [x.x.x]
+- Added `Action<string> Log { get; set; }` property to `MigrationOptions` to allow 
+  a custom logger to be passed into migrations.  Also added 
+  `protected void Log(string message);` to abstract `Migration` class which calls
+  the custom logger if one has been specified and `Debug.WriteLine` otherwise.
 
 ## [2.0.0]
 - Changed (breaking) - The way the MigrationDocument's Id is determined. Multiple underscores
