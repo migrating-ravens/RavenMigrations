@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Reflection;
 
 namespace RavenMigrations
@@ -20,5 +21,6 @@ namespace RavenMigrations
         public IList<string> Profiles { get; set; }
         public IMigrationResolver MigrationResolver { get; set; }
         public long ToVersion { get; set; }
+        public Action<string> Logger { get; set; }
     }
 }

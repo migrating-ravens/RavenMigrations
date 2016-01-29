@@ -22,7 +22,7 @@ namespace RavenMigrations
             {
                 // send in the document Store
                 var migration = pair.Migration();
-                migration.Setup(documentStore);
+                migration.Setup(documentStore, options.Logger);
 
                 // todo: possible issue here with sharding
                 var migrationId = 
