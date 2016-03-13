@@ -18,7 +18,7 @@ namespace RavenMigrations.Tests
         [Fact]
         public void Can_change_migration_document_seperator_to_dash()
         {
-            new First_Migration().GetMigrationIdFromName(seperator: '-')
+            RavenMigrationHelpers.GetMigrationIdFromName(new First_Migration(), seperator: '-')
                 .Should().Be("ravenmigrations-first-migration-1");
         }
 
@@ -31,7 +31,7 @@ namespace RavenMigrations.Tests
         [Fact]
         public void Can_get_migration_id_from_migration()
         {
-            var id = new First_Migration().GetMigrationIdFromName();
+            var id = RavenMigrationHelpers.GetMigrationIdFromName(new First_Migration());
             id.Should().Be("ravenmigrations/first/migration/1");
         }
 
@@ -111,6 +111,33 @@ namespace RavenMigrations.Tests
                 }
             }
         }
+        
+        [Fact]
+        public void Can_run_a_migration_using_an_alternative_migration_to_document_id_conversion()
+        {
+            int idx = 1;
+            var optionsWithConverter = new MigrationOptions
+            {
+                ConvertToDocumentId = (m, s) =>
+                    RavenMigrationHelpers.RavenMigrationsIdPrefix + s + "test.a.b.c." + (idx++)
+            };
+
+            using (var store = NewDocumentStore())
+            {
+                new TestDocumentIndex().Execute(store);
+
+                Runner.Run(store, optionsWithConverter);
+                WaitForIndexing(store);
+
+                using (var session = store.OpenSession())
+                {
+                    var migrationDocuments = session.Load<MigrationDocument>("ravenmigrations/test.a.b.c.1", "ravenmigrations/test.a.b.c.2");
+                    migrationDocuments
+                        .Count(d => d != null)
+                        .Should().Be(2);
+                }
+            }
+        }
 
         [Fact]
         public void Can_call_up_then_down_on_migrations()
@@ -185,11 +212,11 @@ namespace RavenMigrations.Tests
                         .Should().Be(1);
 
                     var secondMigrationDocument =
-                        session.Load<MigrationDocument>(new Second_Migration().GetMigrationIdFromName());
+                        session.Load<MigrationDocument>(RavenMigrationHelpers.GetMigrationIdFromName(new Second_Migration()));
                     secondMigrationDocument.Should().BeNull();
 
                     var firstMigrationDocument =
-                        session.Load<MigrationDocument>(new First_Migration().GetMigrationIdFromName());
+                        session.Load<MigrationDocument>(RavenMigrationHelpers.GetMigrationIdFromName(new First_Migration()));
                     firstMigrationDocument.Should().NotBeNull();
                 }
             }

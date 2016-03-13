@@ -13,6 +13,7 @@ namespace RavenMigrations
             MigrationResolver = new DefaultMigrationResolver();
             Assemblies = new List<Assembly>();
             ToVersion = 0;
+            ConvertToDocumentId = RavenMigrationHelpers.GetMigrationIdFromName;
         }
 
         public Directions Direction { get; set; }
@@ -20,5 +21,6 @@ namespace RavenMigrations
         public IList<string> Profiles { get; set; }
         public IMigrationResolver MigrationResolver { get; set; }
         public long ToVersion { get; set; }
+        public MigrationToDocumentIdConversion ConvertToDocumentId { get; set; }
     }
 }

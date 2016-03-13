@@ -25,8 +25,7 @@ namespace RavenMigrations
                 migration.Setup(documentStore);
 
                 // todo: possible issue here with sharding
-                var migrationId = 
-                    migration.GetMigrationIdFromName(documentStore.Conventions.IdentityPartsSeparator[0]);
+                var migrationId = options.ConvertToDocumentId(migration, documentStore.Conventions.IdentityPartsSeparator[0]);
 
                 using (var session = documentStore.OpenSession())
                 {

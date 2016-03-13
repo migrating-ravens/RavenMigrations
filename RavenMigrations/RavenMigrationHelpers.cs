@@ -10,7 +10,7 @@ namespace RavenMigrations
     {
         public static readonly string RavenMigrationsIdPrefix = "ravenmigrations";
 
-        public static string GetMigrationIdFromName(this Migration migration, char seperator = '/')
+        public static string GetMigrationIdFromName(Migration migration, char seperator = '/')
         {
             const char underscore = '_';
             var type = migration.GetType();
