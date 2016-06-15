@@ -3,13 +3,17 @@ All notable changes will be documented in this file, particularly any breaking
 changes. This project adheres to [Semantic Versioning](http://semver.org).
 
 ## [x.x.x]
-- Changed - The way the MigrationDocument's Id is determined. Multiple underscores
+
+## [2.0.0]
+- Changed (breaking) - The way the MigrationDocument's Id is determined. Multiple underscores
   will now combined into one separator to be used between each section of the Id.
-  This could be a breaking change if there are migrations named with multiple
-  underscores, depending on the version of Raven client and server in use. Some
+  **This could be a breaking change if there are migrations named with multiple
+  underscores**, depending on the version of Raven client and server in use. Some
   versions of Raven ignore multiple separators and others do not. This change
-  could cause migrations to be run multiple times in some cases if the ids are not
+  **could cause migrations to be run multiple times** in some cases if the ids are not
   changed first.
+- Added - Ability to inherit from `MigrationAttribute` to specify custom migration
+  versions.
 
 ## [1.2.0]
 - Added new way to change a collection with
