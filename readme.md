@@ -61,7 +61,7 @@ In every migration you have access to the document store, so you are able to do 
 
 ### Runner
 
-Raven Migrations comes with a migration runner. It scans all provided assemblies for any classes implementing the **Migration** base class and then orders them according to their migration value. 
+Raven Migrations comes with a migration runner. It scans all provided assemblies for any classes implementing the **Migration** base class and then orders them according to their migration value.
 
 After each migration is executed, a document of type **MigrationDocument** is inserted into your database, to insure the next time the runner is executed that migration is not executed again. When a migration is rolled back the document is removed.
 
@@ -127,7 +127,7 @@ Raven Migrations lets you migrate at the **RavenJObject** level, giving full acc
 Alter.Collection("People", (doc, metadata) => { ... });
 ```
 
-Batching changes is taken care of with the default batch size being 128.  You can change the batch size if needed: 
+Batching changes is taken care of with the default batch size being 128.  You can change the batch size if needed:
 ```
 public void Collection(string tag, Action<RavenJObject, RavenJObject> action, int pageSize = 128)
 ```
@@ -234,6 +234,38 @@ Let's say that you refactor and move ```Person``` to another assembly.  So that 
     }
 ```
 
+### Custom migration attributes
+
+If the `long` version number does not fit your versioning scheme, a custom
+attribute can inherit from `MigrationAttribute`.
+
+Example implementation for semantic versions:
+```
+    public class MigrationVersionAttribute : MigrationAttribute
+    {
+        public MigrationVersionAttribute(int major, int minor, int patch, int migration, params string [] profiles)
+            :base(CreateVersionNumber(major, minor, patch, migration), profiles)
+        {
+
+        }
+
+        private static long CreateVersionNumber(int major, int minor, int patch, int migration)
+        {
+            return major*100000000000L + minor*10000000L + patch*1000L + migration;
+        }
+    }
+}
+```
+
+Example usage in a migration:
+```
+    [MigrationVersion(6, 9, 11, 1)]
+    public class CustomVersionMigration : Migration
+    {
+        public override void Up() { /* ... */ }
+    }    
+```
+
 ## Integration
 
 We suggest you run the migrations at the start of your application to ensure that any new changes you have made apply to your application before you application starts. If you do not want to do it here, you can choose to do it out of band using a seperate application.
@@ -269,4 +301,3 @@ Thanks goes to [Sean Kearon](https://github.com/seankearon) who helped dog food 
 
 This project strives to adhere to the [semver](http://semver.org) guidelines. See the [contributing](./CONTRIBUTING.md) and [maintaining](./MAINTAINING.md)
 guides for more on this.
-
