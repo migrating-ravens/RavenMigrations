@@ -6,6 +6,7 @@ using Raven.Client;
 using Raven.Client.Indexes;
 using Raven.Json.Linq;
 using Raven.Tests.Helpers;
+using Moq;
 using Xunit;
 
 namespace RavenMigrations.Tests
@@ -76,12 +77,65 @@ namespace RavenMigrations.Tests
             }
         }
 
+        [Fact]
+        public void Logger_WriteInformation_is_called_when_altering_collection()
+        {
+            var loggerMock = new Mock<ILogger>();
+
+            using (var store = NewDocumentStore())
+            {
+                InitialiseWithPerson(store, "Sean Kearon");
+
+                var migration = new AlterCollectionMigration();
+                migration.Setup(store, loggerMock.Object);
+
+                migration.Up();
+            }
+
+            loggerMock.Verify(logger => logger.WriteInformation("Updated {0} documents", 1), "Informational message should indicate how many documents were updated.");
+        }
+
+        [Fact]
+        public void Logger_WriteInformation_is_called_per_batch_when_altering_collection()
+        {
+            var loggerMock = new Mock<ILogger>();
+
+            using (var store = NewDocumentStore())
+            {
+                InitialiseWithPeople(store, new List<Person1>() {
+                    new Person1 {Name = "Sean Kearon"},
+                    new Person1 {Name = "Jared M. Smith"},
+                    new Person1 {Name = "Michael Owen"},
+                    new Person1 {Name = "Jonathan Skelton"},
+                    new Person1 {Name = "Matt King"}
+                });
+                var migration = new AlterCollectionMigration();
+                migration.Setup(store, loggerMock.Object);
+
+                migration.Up();
+            }
+
+            loggerMock.Verify(logger => logger.WriteInformation("Updated {0} documents", 2), Times.Exactly(2), "Informational message should indicate how many documents were updated.");
+            loggerMock.Verify(logger => logger.WriteInformation("Updated {0} documents", 1), Times.Once, "Informational message should indicate how many documents were updated.");
+        }
+
         private void InitialiseWithPerson(IDocumentStore store, string name)
         {
             new RavenDocumentsByEntityName().Execute(store); //https://groups.google.com/forum/#!topic/ravendb/QqZPrRUwEkE
             using (var session = store.OpenSession())
             {
                 session.Store(new Person1 {Id = "People/1", Name = name});
+                session.SaveChanges();
+            }
+            WaitForIndexing(store);
+        }
+
+        private void InitialiseWithPeople(IDocumentStore store, List<Person1> people)
+        {
+            new RavenDocumentsByEntityName().Execute(store); //https://groups.google.com/forum/#!topic/ravendb/QqZPrRUwEkE
+            using (var session = store.OpenSession())
+            {
+                people.ForEach(session.Store);
                 session.SaveChanges();
             }
             WaitForIndexing(store);
@@ -98,7 +152,7 @@ namespace RavenMigrations.Tests
 
         public override void Up()
         {
-            Alter.CollectionWithAdditionalCommands("Person1s", MigratePerson1ToPerson2);
+            Alter.CollectionWithAdditionalCommands("Person1s", MigratePerson1ToPerson2, 2);
         }
 
         private void MigratePerson2ToPerson1(RavenJObject doc, RavenJObject metadata)

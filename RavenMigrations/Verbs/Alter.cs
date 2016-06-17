@@ -11,9 +11,9 @@ namespace RavenMigrations.Verbs
 {
     public class Alter
     {
-        public Alter(IDocumentStore documentStore, ILogger logger)
+        public Alter(IDocumentStore documentStore, ILogger logger = null)
         {
-            Logger = logger;
+            Logger = logger ?? new NullLogger();
             DocumentStore = documentStore;
         }
 

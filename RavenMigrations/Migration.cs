@@ -10,10 +10,10 @@ namespace RavenMigrations
         {
         }
 
-        public virtual void Setup(IDocumentStore documentStore, ILogger logger)
+        public virtual void Setup(IDocumentStore documentStore, ILogger logger = null)
         {
             DocumentStore = documentStore;
-            Logger = logger;
+            Logger = logger ?? new NullLogger();
             Alter = new Alter(documentStore, logger);
         }
 

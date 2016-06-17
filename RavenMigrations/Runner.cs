@@ -35,6 +35,9 @@ namespace RavenMigrations
                     switch (options.Direction)
                     {
                         case Directions.Down:
+                            if (migrationDoc == null)
+                                continue;
+
                             options.Logger.WriteInformation("{0}: Down migration started", migration.GetType().Name);
                             migration.Down();
                             session.Delete(migrationDoc);
