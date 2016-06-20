@@ -3,6 +3,8 @@ All notable changes will be documented in this file, particularly any breaking
 changes. This project adheres to [Semantic Versioning](http://semver.org).
 
 ## [x.x.x]
+
+## [2.1.0]
 - Added - Option to configure a `RavenMigration.ILogger` or use the `ConsoleLogger`.
 
 ## [2.0.0]
