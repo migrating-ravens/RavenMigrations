@@ -68,24 +68,26 @@ After each migration is executed, a document of type **MigrationDocument** is in
 You can modify the runner options by declaring a **MigrationOptions** instance and passing it to the runner.
 
 ```
- 	public class MigrationOptions
+public class MigrationOptions
+{
+    public MigrationOptions()
     {
-        public MigrationOptions()
-        {
-            Direction = Directions.Up;
-            Assemblies = new List<Assembly>();
-            Profiles = new List<string>();
-            MigrationResolver = new DefaultMigrationResolver();
-            Assemblies = new List<Assembly>();
-            ToVersion = 0;
-        }
-
-        public Directions Direction { get; set; }
-        public IList<Assembly> Assemblies { get; set; }
-        public IList<string> Profiles { get; set; }
-        public IMigrationResolver MigrationResolver { get; set; }
-        public long ToVersion { get; set; }
+         Direction = Directions.Up;
+         Assemblies = new List<Assembly>();
+         Profiles = new List<string>();
+         MigrationResolver = new DefaultMigrationResolver();
+         Assemblies = new List<Assembly>();
+         ToVersion = 0;
+         Logger = new ConsoleLogger();
     }
+
+    public Directions Direction { get; set; }
+    public IList<Assembly> Assemblies { get; set; }
+    public IList<string> Profiles { get; set; }
+    public IMigrationResolver MigrationResolver { get; set; }
+    public long ToVersion { get; set; }
+    public ILogger Logger { get; set; }
+}
 ```
 
 ### Profiles
@@ -264,6 +266,20 @@ Example usage in a migration:
     {
         public override void Up() { /* ... */ }
     }    
+```
+
+## Logging
+
+Specify a logger when configuring the runner.
+
+By default the `ConsoleLogger` is used.
+
+Implement the `RavenMigrations.ILogger` interface to create your own logger:
+
+```
+void WriteInformation(string format, params object[] args);
+void WriteError(string format, params object[] args);
+void WriteWarning(string format, params object[] args);
 ```
 
 ## Integration

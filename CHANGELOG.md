@@ -3,6 +3,7 @@ All notable changes will be documented in this file, particularly any breaking
 changes. This project adheres to [Semantic Versioning](http://semver.org).
 
 ## [x.x.x]
+- Added - Option to configure a `RavenMigration.ILogger` or use the `ConsoleLogger`.
 
 ## [2.0.0]
 - Changed (breaking) - The way the MigrationDocument's Id is determined. Multiple underscores

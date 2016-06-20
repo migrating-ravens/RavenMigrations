@@ -48,15 +48,18 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ConsoleLogger.cs" />
     <Compile Include="DefaultMigrationResolver.cs" />
     <Compile Include="Directions.cs" />
     <Compile Include="Extensions\MigrationExtensions.cs" />
+    <Compile Include="ILogger.cs" />
     <Compile Include="IMigrationResolver.cs" />
     <Compile Include="MigrationAttribute.cs" />
     <Compile Include="Migration.cs" />
     <Compile Include="MigrationDocument.cs" />
     <Compile Include="MigrationOptions.cs" />
     <Compile Include="MigrationWithAttribute.cs" />
+    <Compile Include="NullLogger.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RavenMigrationHelpers.cs" />
     <Compile Include="Runner.cs" />

@@ -13,6 +13,7 @@ namespace RavenMigrations
             MigrationResolver = new DefaultMigrationResolver();
             Assemblies = new List<Assembly>();
             ToVersion = 0;
+            Logger = new ConsoleLogger();
         }
 
         public Directions Direction { get; set; }
@@ -20,5 +21,6 @@ namespace RavenMigrations
         public IList<string> Profiles { get; set; }
         public IMigrationResolver MigrationResolver { get; set; }
         public long ToVersion { get; set; }
+        public ILogger Logger { get; set; }
     }
 }

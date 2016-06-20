@@ -1,6 +1,8 @@
 ﻿using System.Linq;
 using FluentAssertions;
+using Moq;
 using Raven.Abstractions.Data;
+using Raven.Client;
 using Raven.Client.Indexes;
 using Raven.Tests.Helpers;
 using Xunit;
@@ -284,6 +286,52 @@ namespace RavenMigrations.Tests
                 }
             }
         }
+
+        public class Logger
+        {
+            public class WhenMigrationRunUp : RavenTestBase
+            {
+                [Fact]
+                public void Logger_WriteInformation_should_be_called_before_and_after_migration()
+                {
+                    var mockLogger = new Mock<ILogger>();
+
+                    using (var store = NewDocumentStore())
+                    {
+                        Runner.Run(store, new MigrationOptions { Logger = mockLogger.Object });
+                    }
+
+                    mockLogger.Verify(logger => logger.WriteInformation("{0}: Up migration started", typeof(First_Migration).Name), Times.AtLeastOnce, "Informational message should indicate Up migration started.");
+                    mockLogger.Verify(logger => logger.WriteInformation("{0}: Up migration completed", typeof(First_Migration).Name), Times.AtLeastOnce, "Informational message should indicate Up migration started.");
+                }
+            }
+
+            public class WhenMigrationRunDown : RavenTestBase
+            {
+                [Fact]
+                public void Logger_WriteInformation_should_be_called_before_and_after_migration()
+                {
+                    var mockLogger = new Mock<ILogger>();
+
+                    using (var store = NewDocumentStore())
+                    {
+                        new TestDocumentIndex().Execute(store);
+
+                        Runner.Run(store);
+                        WaitForIndexing(store);
+
+                        Runner.Run(store, new MigrationOptions
+                        {
+                            Direction = Directions.Down, 
+                            Logger = mockLogger.Object
+                        });
+                    }
+
+                    mockLogger.Verify(logger => logger.WriteInformation("{0}: Down migration started", typeof(First_Migration).Name), Times.AtLeastOnce, "Informational message should indicate Up migration started.");
+                    mockLogger.Verify(logger => logger.WriteInformation("{0}: Down migration completed", typeof(First_Migration).Name), Times.AtLeastOnce, "Informational message should indicate Up migration started.");
+                }
+            }
+        }
     }
 
     public class TestDocument
@@ -388,7 +436,9 @@ namespace RavenMigrations.Tests
                 session.SaveChanges();
             }
         }
-    }    
+    }
+
+
 
     public abstract class BaseMigration : Migration
     {

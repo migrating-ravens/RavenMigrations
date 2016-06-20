@@ -11,8 +11,9 @@ namespace RavenMigrations.Verbs
 {
     public class Alter
     {
-        public Alter(IDocumentStore documentStore)
+        public Alter(IDocumentStore documentStore, ILogger logger = null)
         {
+            Logger = logger ?? new NullLogger();
             DocumentStore = documentStore;
         }
 
@@ -73,15 +74,20 @@ namespace RavenMigrations.Verbs
                 if (actions.MigrationCommands.Count == pageSize)
                 {
                     DocumentStore.DatabaseCommands.Batch(actions.AllCommands());
+                    Logger.WriteInformation("Updated {0} documents", actions.MigrationCommands.Count);
                     actions.ClearMigrationCommands();
                 }
             }
 
-            if (actions.AllCommands().Count > 0)
-                DocumentStore.DatabaseCommands.Batch(actions.AllCommands());
+            var commands = actions.AllCommands();
+            if (commands.Count > 0)
+                DocumentStore.DatabaseCommands.Batch(commands);
+			Logger.WriteInformation("Updated {0} documents", actions.MigrationCommands.Count);
+
         }
 
         protected IDocumentStore DocumentStore { get; private set; }
+        protected ILogger Logger { get; private set; }
     }
 
     public class RavenActions
