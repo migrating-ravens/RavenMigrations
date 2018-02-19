@@ -1,3 +1,4 @@
+image: Visual Studio 2017
 version: $(core_version)+{branch}.{build}
 configuration: Release
 assembly_info:
