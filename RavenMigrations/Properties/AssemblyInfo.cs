@@ -7,7 +7,6 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("RavenMigrations")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("RavenMigrations")]
 [assembly: AssemblyCopyright("Copyright © 2013")]
 [assembly: AssemblyTrademark("")]
@@ -25,4 +24,3 @@ using System.Runtime.InteropServices;
 // If you need to bump the version, do it in the appveyor.yml
 [assembly: AssemblyVersion("0.0.0.0")]
 [assembly: AssemblyFileVersion("0.0.0.0")]
-[assembly: AssemblyInformationalVersion("0.0.0.0")]
