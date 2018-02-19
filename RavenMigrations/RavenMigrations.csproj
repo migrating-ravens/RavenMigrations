@@ -7,13 +7,16 @@
     <AssemblyName>RavenMigrations</AssemblyName>
     <TargetFrameworks>netstandard2.0;net461</TargetFrameworks>
 
+    <VersionPrefix>3.0.0</VersionPrefix>
+    <VersionSuffix>alpa-1</VersionSuffix>
+
     <Version Condition=" '$(VersionSuffix)' != '' ">$(VersionPrefix)-$(VersionSuffix)</Version>
     <Version Condition=" '$(VersionSuffix)' == '' ">$(VersionPrefix)</Version>
     <AssemblyVersion>$(VersionPrefix).0</AssemblyVersion>
     <FileVersion>$(VersionPrefix).0</FileVersion>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <PackageProjectUrl>https://github.com/carable/RavenMigrations</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/carable/RavenMigrations</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/migrating-ravens/RavenMigrations</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/migrating-ravens/RavenMigrations</RepositoryUrl>
     <PackageReleaseNotes>.net Core version of RavenMigrations</PackageReleaseNotes>
 
     <GenerateAssemblyTitleAttribute>false</GenerateAssemblyTitleAttribute>
@@ -22,8 +25,8 @@
     <GenerateAssemblyVersionAttribute>false</GenerateAssemblyVersionAttribute>
     <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
     <GenerateAssemblyFileVersionAttribute>false</GenerateAssemblyFileVersionAttribute>
-      <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-  <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugType>full</DebugType>
