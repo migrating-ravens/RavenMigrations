@@ -8,7 +8,7 @@ namespace Raven.Migrations
 {
     public static class RavenMigrationHelpers
     {
-        public static readonly string RavenMigrationsIdPrefix = "ravenmigrations";
+        public static readonly string RavenMigrationsIdPrefix = "MigrationRecord";
 
         public static string GetMigrationIdFromName(this Migration migration, char seperator = '/')
         {

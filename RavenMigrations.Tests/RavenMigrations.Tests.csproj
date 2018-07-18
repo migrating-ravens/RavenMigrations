@@ -95,8 +95,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AlterTests.cs" />
-    <Compile Include="RunnerTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RunnerTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />

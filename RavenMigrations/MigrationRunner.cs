@@ -32,9 +32,8 @@ namespace Raven.Migrations
 
             foreach (var pair in migrations)
             {
-                // send in the document Store
                 var migration = pair.Migration();
-                migration.Setup(this.docStore);
+                migration.Setup(this.docStore, this.logger);
                 var migrationId = migration.GetMigrationIdFromName(this.docStore.Conventions.IdentityPartsSeparator[0]);
 
                 using (var session = this.docStore.OpenSession())
