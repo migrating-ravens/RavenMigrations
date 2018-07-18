@@ -1,8 +1,6 @@
-﻿using Raven.Client;
-using RavenMigrations.Extensions;
-using RavenMigrations.Verbs;
+﻿using Raven.Client.Documents;
 
-namespace RavenMigrations
+namespace Raven.Migrations
 {
     public abstract class Migration
     {
@@ -10,22 +8,18 @@ namespace RavenMigrations
         {
         }
 
-        public virtual void Setup(IDocumentStore documentStore, ILogger logger = null)
+        public virtual void Setup(IDocumentStore documentStore)
         {
             DocumentStore = documentStore;
-            Logger = logger ?? new NullLogger();
-            Alter = new Alter(documentStore, logger);
         }
 
         public abstract void Up();
 
         protected void WaitForIndexing()
         {
-            DocumentStore.WaitForIndexing();
+            //DocumentStore.WaitForIndexing();
         }
 
-        protected Alter Alter { get; private set; }
         protected IDocumentStore DocumentStore { get; private set; }
-        protected ILogger Logger { get; private set; }
     }
 }

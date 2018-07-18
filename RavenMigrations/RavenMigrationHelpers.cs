@@ -4,7 +4,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
 
-namespace RavenMigrations
+namespace Raven.Migrations
 {
     public static class RavenMigrationHelpers
     {
@@ -35,7 +35,10 @@ namespace RavenMigrations
 
         public static IEnumerable<Type> GetLoadableTypes(this Assembly assembly)
         {
-            if (assembly == null) throw new ArgumentNullException("assembly");
+            if (assembly == null)
+            {
+                throw new ArgumentNullException(nameof(assembly));
+            }
             try
             {
                 return assembly.GetTypes();

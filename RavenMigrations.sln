@@ -1,8 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2012
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RavenMigrations", "RavenMigrations\RavenMigrations.csproj", "{E540A81D-3CF3-4A78-A59B-EE22CFE406BF}"
-EndProject
+# Visual Studio 15
+VisualStudioVersion = 15.0.27703.2042
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RavenMigrations.Tests", "RavenMigrations.Tests\RavenMigrations.Tests.csproj", "{72260850-24EB-4EBA-9C3B-096A63C065D1}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{EC586C7A-19D8-46DF-BCFD-DC5F39C2D2BB}"
@@ -11,6 +11,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{EC586C
 		.nuget\NuGet.exe = .nuget\NuGet.exe
 		.nuget\NuGet.targets = .nuget\NuGet.targets
 	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RavenMigrations", "RavenMigrations\Raven.Migrations.csproj", "{A907F9FB-30D1-499C-9B33-D891836F5C4E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -26,8 +28,15 @@ Global
 		{72260850-24EB-4EBA-9C3B-096A63C065D1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{72260850-24EB-4EBA-9C3B-096A63C065D1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{72260850-24EB-4EBA-9C3B-096A63C065D1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A907F9FB-30D1-499C-9B33-D891836F5C4E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A907F9FB-30D1-499C-9B33-D891836F5C4E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A907F9FB-30D1-499C-9B33-D891836F5C4E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A907F9FB-30D1-499C-9B33-D891836F5C4E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {97071D77-035B-4126-AD4E-DE150E318714}
 	EndGlobalSection
 EndGlobal

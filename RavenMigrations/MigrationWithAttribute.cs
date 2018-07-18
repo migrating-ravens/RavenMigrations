@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace RavenMigrations
+namespace Raven.Migrations
 {
     internal class MigrationWithAttribute
     {

@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Reflection;
 
-namespace RavenMigrations
+namespace Raven.Migrations
 {
     public class MigrationOptions
     {
@@ -13,14 +13,12 @@ namespace RavenMigrations
             MigrationResolver = new DefaultMigrationResolver();
             Assemblies = new List<Assembly>();
             ToVersion = 0;
-            Logger = new ConsoleLogger();
         }
 
         public Directions Direction { get; set; }
         public IList<Assembly> Assemblies { get; set; }
         public IList<string> Profiles { get; set; }
         public IMigrationResolver MigrationResolver { get; set; }
-        public long ToVersion { get; set; }
-        public ILogger Logger { get; set; }
+        public int ToVersion { get; set; }
     }
 }

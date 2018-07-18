@@ -1,4 +1,4 @@
-﻿namespace RavenMigrations
+﻿namespace Raven.Migrations
 {
     public enum Directions
     {

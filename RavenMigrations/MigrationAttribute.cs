@@ -2,24 +2,24 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace RavenMigrations
+namespace Raven.Migrations
 {
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
     public class MigrationAttribute : Attribute
     {
-        public MigrationAttribute(long version)
+        public MigrationAttribute(int version)
             : this(version, null)
         {
             
         }
 
-        public MigrationAttribute(long version, params string[] profiles)
+        public MigrationAttribute(int version, params string[] profiles)
         {
             Version = version;
             Profiles = profiles ?? Enumerable.Empty<string>();
         }
 
-        public long Version { get; set; }
+        public int Version { get; set; }
         public IEnumerable<string> Profiles { get; set; }
     }
 }
