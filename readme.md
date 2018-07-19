@@ -88,8 +88,8 @@ migrationRunner.Run();
 
 Each important part of the migration is numbered:
 
-1. Every migration has to be decorated with the **MigrationAttribute**, and needs to be seeded it with a **int* value. We recommend you seed it with a **DateTime** stamp of yyyyMMddHHmmss ex. 20131031083545. This helps keeps teams for guessing and conflicting on the next migration number.
-2. Every migration needs to implement from the base class of **Migration**. This gives you access to base functionality and the ability to implement **Up** and **Down**.
+1. Every migration has to be decorated with the **MigrationAttribute**, and needs to be seeded it with a *long* value. For smaller teams, a simple integer will do (ex. the first patch has Migration(1), then the second patch has Migration(2), etc.) If you're working with a larger team, where patch numbers might collide, we recommend you seed it with a **DateTime** stamp of yyyyMMddHHmmss ex. 20131031083545. This helps keeps teams from guessing and conflicting on the next migration number.
+2. Every migration needs to implement from the base class of **Migration**. This gives you access to base functionality and the ability to implement **Up** and **Down**. It also gives you access to the Raven ``DocumentStore`` and an ``ILogger`` instance.
 3. **Up** is the method that occurs when a migration is executed. As you see above, we are adding a document.
 4. **Down** is the method that occurs when a migration is rolledback. This is not always possible, but if it is, then it most likely will be the reverse of **Up**.
 

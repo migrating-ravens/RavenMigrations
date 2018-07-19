@@ -19,7 +19,7 @@ namespace Raven.Migrations
             Profiles = profiles ?? Enumerable.Empty<string>();
         }
 
-        public int Version { get; set; }
+        public long Version { get; set; }
         public IEnumerable<string> Profiles { get; set; }
     }
 }
