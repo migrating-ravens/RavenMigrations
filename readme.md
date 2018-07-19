@@ -29,61 +29,61 @@ Every migration has several elements you need to be aware of. Additionally, ther
 A migration looks like the following:
 
 ```csharp
-    // #1 - specify the migration number
-    [Migration(1)]                 
-    public class First_Migration : Migration // #2 inherit from Migration
+// #1 - specify the migration number
+[Migration(1)]                 
+public class First_Migration : Migration // #2 inherit from Migration
+{
+    // #3 Do the migration
+    public override void Up()
     {
-    	// #3 Do the migration
-        public override void Up()
+        using (var session = DocumentStore.OpenSession())
         {
-            using (var session = DocumentStore.OpenSession())
-            {
-                session.Store(new TestDocument 
-                { 
-                    Id = "TestDocuments/1",
-                    Name = "Khalid Abuhakmeh" 
-                });
-                session.SaveChanges();
-            }
-        }
-        // #4 optional: undo the migration
-        public override void Down()
-        {
-            using (var session = DocumentStore.OpenSession())
-            {
-                session.Delete("TestDocuments/1");
-                session.SaveChanges();
-            }
+            session.Store(new TestDocument 
+            { 
+                Id = "TestDocuments/1",
+                Name = "Khalid Abuhakmeh" 
+            });
+            session.SaveChanges();
         }
     }
+    // #4 optional: undo the migration
+    public override void Down()
+    {
+        using (var session = DocumentStore.OpenSession())
+        {
+            session.Delete("TestDocuments/1");
+            session.SaveChanges();
+        }
+    }
+}
 ```
 
 To run the migrations, you can use Microsoft's Dependency Injection:
 ```csharp
-    public void ConfigureServices(IServiceCollection services)
-    {
-        // Add the MigrationRunner into the dependency injection container.
-        services.AddRavenDbMigrations();
+public void ConfigureServices(IServiceCollection services)
+{
+    // Add the MigrationRunner into the dependency injection container.
+    services.AddRavenDbMigrations();
 
-        // ...
+    // ...
    
-        // Get the migration runner and execute pending migrations.
-        var migrationRunner = services.BuildServiceProvider().GetRequiredService<MigrationRunner>();
-        migrationRunner.Run();
-    }
+    // Get the migration runner and execute pending migrations.
+    var migrationRunner = services.BuildServiceProvider().GetRequiredService<MigrationRunner>();
+    migrationRunner.Run();
+}
 ```
 
 Not using ASP.NET Core? You can create the runner manually:
 ```csharp
-    // Skip dependency injection and run the migrations.
+// Skip dependency injection and run the migrations.
 
-    // Create migration options, using all Migration objects found in the current assembly.
-    var options = new MigrationOptions();
-    options.Assemblies.Add(Assembly.GetExecutingAssembly());
+// Create migration options, using all Migration objects found in the current assembly.
+var options = new MigrationOptions();
+options.Assemblies.Add(Assembly.GetExecutingAssembly());
 
-    // Create a new migration runner. docStore is your RavenDB IDocumentStore. Logger is an ILogger<MigrationRunner>.
-    var migrationRunner = new MigrationRunner(docStore, options, logger);
-    migrationRunner.Run();
+// Create a new migration runner. docStore is your RavenDB IDocumentStore. Logger is an ILogger<MigrationRunner>.
+var migrationRunner = new MigrationRunner(docStore, options, logger);
+migrationRunner.Run();
 ```
 
 Each important part of the migration is numbered:
@@ -131,20 +131,23 @@ public class MigrationOptions
 We understand there are times when you want to run specific migrations in certain environments, so Raven Migrations supports profiles. For instance, some migrations might only run during development, by decorating your migration with the profile of *"development"* and setting the options to include the profile will execute that migration.
 
 ```csharp
-	[Migration(3, "development")]
-    public class Development_Migration : Migration
+[Migration(3, "development")]
+public class Development_Migration : Migration
+{
+    public override void Up()
     {
-        public override void Up()
+        using (var session = DocumentStore.OpenSession())
         {
-            using (var session = DocumentStore.OpenSession())
-            {
-                session.Store(new { Id = "development-1" });
-                session.SaveChanges();
-            }
+            session.Store(new { Id = "development-1" });
+            session.SaveChanges();
         }
     }
+}
 
-    Runner.Run(store, new MigrationOptions { Profiles = new[] { "development" } });
+...
+// Add the MigrationRunner and configure it to run development migrations only.
+services.AddRavenDbMigrations(options => options.Profiles = new[] { "development" } });
+
 ```
 
 You can also specify that a particular profile belongs in more than one profile by setting multiple profile names in the attribute.

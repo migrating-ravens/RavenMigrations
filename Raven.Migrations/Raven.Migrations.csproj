@@ -10,12 +10,12 @@
     <Description>Raven Migrations is a migration framework for RavenDB to help with updates to your database objects.</Description>
     <Copyright>BitShuva 2018</Copyright>
     <Product>RavenDB.Migrations</Product>
-    <RepositoryUrl>https://github.com/JudahGabriel/RavenMigrations</RepositoryUrl>
+    <RepositoryUrl>https://github.com/migrating-ravens/RavenMigrations</RepositoryUrl>
     <PackageIconUrl>https://raw.githubusercontent.com/JudahGabriel/RavenMigrations/master/Raven.Migrations/logo-for-nuget.png</PackageIconUrl>
-    <PackageProjectUrl>https://github.com/JudahGabriel/RavenMigrations/</PackageProjectUrl>
-    <PackageLicenseUrl>https://github.com/JudahGabriel/RavenMigrations/blob/master/LICENSE.txt</PackageLicenseUrl>
+    <PackageProjectUrl>https://github.com/migrating-ravens/RavenMigrations</PackageProjectUrl>
+    <PackageLicenseUrl>https://github.com/migrating-ravens/RavenMigrations/blob/master/LICENSE.txt</PackageLicenseUrl>
     <PackageTags>ravendb, nosql, migration, schema</PackageTags>
-    <PackageReleaseNotes>Upgrade to Raven 4, .NET Core 2.1</PackageReleaseNotes>
+    <PackageReleaseNotes>Upgrade to Raven 4, .NET Core 2.1.</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
