@@ -11,11 +11,17 @@
     <Copyright>BitShuva 2018</Copyright>
     <Product>RavenDB.Migrations</Product>
     <RepositoryUrl>https://github.com/JudahGabriel/RavenMigrations</RepositoryUrl>
+    <PackageIconUrl>https://raw.githubusercontent.com/JudahGabriel/RavenMigrations/master/Raven.Migrations/logo-for-nuget.png</PackageIconUrl>
+    <PackageProjectUrl>https://github.com/JudahGabriel/RavenMigrations/</PackageProjectUrl>
+    <PackageLicenseUrl>https://github.com/JudahGabriel/RavenMigrations/blob/master/LICENSE.txt</PackageLicenseUrl>
+    <PackageTags>ravendb, nosql, migration, schema</PackageTags>
+    <PackageReleaseNotes>Upgrade to Raven 4, .NET Core 2.1</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="2.1.1" />
-    <PackageReference Include="Microsoft.Extensions.Logging" Version="2.1.1" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="2.1.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="2.1.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="2.1.0" />
     <PackageReference Include="RavenDB.Client" Version="4.0.5" />
   </ItemGroup>
 

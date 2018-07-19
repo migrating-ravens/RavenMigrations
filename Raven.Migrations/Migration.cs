@@ -71,9 +71,15 @@ namespace Raven.Migrations
         ///         PatchCollection("from Orders update { this.Freight += 10 }");
         ///     </code>
         /// </example>
-        protected Operation PatchCollection(string rql)
+        protected Operation PatchCollection(string rql, bool waitForCompletion = true)
         {
-            return this.Db.Operations.Send(new PatchByQueryOperation(rql));
+            var operation = this.Db.Operations.Send(new PatchByQueryOperation(rql));
+            if (waitForCompletion)
+            {
+                operation.WaitForCompletion();
+            }
+
+            return operation;
         }
     }
 }

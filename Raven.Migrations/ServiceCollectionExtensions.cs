@@ -28,7 +28,7 @@ namespace Raven.Migrations
             {
                 options.Assemblies.Add(Assembly.GetCallingAssembly());
             }
-
+            
             return services.AddSingleton(provider =>
             {
                 var docStore = provider.GetRequiredService<IDocumentStore>();

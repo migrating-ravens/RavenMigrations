@@ -12,12 +12,14 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{EC586C
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Raven.Migrations", "Raven.Migrations\Raven.Migrations.csproj", "{A907F9FB-30D1-499C-9B33-D891836F5C4E}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Raven.Migrations.Tests", "Raven.Migrations.Tests\Raven.Migrations.Tests.csproj", "{15BE5B48-F714-436A-8433-7CEF68D410AF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Raven.Migrations.Test", "Raven.Migrations.Tests\Raven.Migrations.Test.csproj", "{15BE5B48-F714-436A-8433-7CEF68D410AF}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{5A09B7FE-D694-45B5-BCBC-256A8E06CFC5}"
 	ProjectSection(SolutionItems) = preProject
 		readme.md = readme.md
 	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Raven.Migrations.Sample", "Raven.Migrations.Sample\Raven.Migrations.Sample.csproj", "{6DD3C717-6777-455A-A55F-E311B852B214}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +35,10 @@ Global
 		{15BE5B48-F714-436A-8433-7CEF68D410AF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{15BE5B48-F714-436A-8433-7CEF68D410AF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{15BE5B48-F714-436A-8433-7CEF68D410AF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6DD3C717-6777-455A-A55F-E311B852B214}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6DD3C717-6777-455A-A55F-E311B852B214}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6DD3C717-6777-455A-A55F-E311B852B214}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6DD3C717-6777-455A-A55F-E311B852B214}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
