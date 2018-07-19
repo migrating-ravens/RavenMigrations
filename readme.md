@@ -36,7 +36,7 @@ public class First_Migration : Migration // #2 inherit from Migration
     // #3 Do the migration
     public override void Up()
     {
-        using (var session = DocumentStore.OpenSession())
+        using (var session = Db.OpenSession())
         {
             session.Store(new TestDocument 
             { 
@@ -49,7 +49,7 @@ public class First_Migration : Migration // #2 inherit from Migration
     // #4 optional: undo the migration
     public override void Down()
     {
-        using (var session = DocumentStore.OpenSession())
+        using (var session = Db.OpenSession())
         {
             session.Delete("TestDocuments/1");
             session.SaveChanges();
@@ -136,7 +136,7 @@ public class Development_Migration : Migration
 {
     public override void Up()
     {
-        using (var session = DocumentStore.OpenSession())
+        using (var session = Db.OpenSession())
         {
             session.Store(new { Id = "development-1" });
             session.SaveChanges();
