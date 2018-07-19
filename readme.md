@@ -190,7 +190,7 @@ public class Person
     public string LastName { get; set; }
 }
 ```
-You now need to migrating your documents or you will lose data when you load your new ```Person```.  The following migration uses ```Alter.Collection``` to split out the first and last names:   
+You now need to migrating your documents or you will lose data when you load your new ```Person```.  The following migration uses RQL to split out the first and last names:   
 
 ```csharp
 [Migration(1)]
