@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Version>3.0.0</Version>
+    <PackageId>RavenMigrations</PackageId>
+    <Authors>Darrel Portzline, Khalid Abuhakmeh, Judah Gabriel Himango</Authors>
+    <Company>BitShuva</Company>
+    <Description>Raven Migrations is a migration framework for RavenDB to help with updates to your database objects.</Description>
+    <Copyright>BitShuva 2018</Copyright>
+    <Product>RavenDB.Migrations</Product>
+    <RepositoryUrl>https://github.com/migrating-ravens/RavenMigrations</RepositoryUrl>
+    <PackageIconUrl>https://raw.githubusercontent.com/JudahGabriel/RavenMigrations/master/Raven.Migrations/logo-for-nuget.png</PackageIconUrl>
+    <PackageProjectUrl>https://github.com/migrating-ravens/RavenMigrations</PackageProjectUrl>
+    <PackageLicenseUrl>https://github.com/migrating-ravens/RavenMigrations/blob/master/LICENSE.txt</PackageLicenseUrl>
+    <PackageTags>ravendb, nosql, migration, schema</PackageTags>
+    <PackageReleaseNotes>Upgrade to Raven 4, .NET Core 2.1.</PackageReleaseNotes>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="2.1.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="2.1.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="2.1.0" />
+    <PackageReference Include="RavenDB.Client" Version="4.0.5" />
+  </ItemGroup>
+
+</Project>

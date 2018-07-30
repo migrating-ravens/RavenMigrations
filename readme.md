@@ -7,7 +7,7 @@
 ## Quick Start
 
 ```
-    PM > Install-Package RavenMigrations
+    PM > Install-Package RavenDB.Migrations
 ```
 
 ## Introduction
@@ -28,32 +28,68 @@ Every migration has several elements you need to be aware of. Additionally, ther
 
 A migration looks like the following:
 
-```
-	// #1
-    [Migration(1)]                 
-    public class First_Migration : Migration // #2
+```csharp
+// #1 - specify the migration number
+[Migration(1)]                 
+public class First_Migration : Migration // #2 inherit from Migration
+{
+    // #3 Do the migration
+    public override void Up()
     {
-    	// #3
-        public override void Up()
+        using (var session = Db.OpenSession())
         {
-            using (var session = DocumentStore.OpenSession())
-            {
-                session.Store(new TestDocument { Name = "Khalid Abuhakmeh" });
-                session.SaveChanges();
-            }
-        }
-        // #4
-        public override void Down()
-        {
-            DocumentStore.DatabaseCommands.DeleteByIndex(new TestDocumentIndex().IndexName, new IndexQuery());
+            session.Store(new TestDocument 
+            { 
+                Id = "TestDocuments/1",
+                Name = "Khalid Abuhakmeh" 
+            });
+            session.SaveChanges();
         }
     }
+    // #4 optional: undo the migration
+    public override void Down()
+    {
+        using (var session = Db.OpenSession())
+        {
+            session.Delete("TestDocuments/1");
+            session.SaveChanges();
+        }
+    }
+}
+```
+
+To run the migrations, you can use Microsoft's Dependency Injection:
+```csharp
+public void ConfigureServices(IServiceCollection services)
+{
+    // Add the MigrationRunner into the dependency injection container.
+    services.AddRavenDbMigrations();
+
+    // ...
+   
+    // Get the migration runner and execute pending migrations.
+    var migrationRunner = services.BuildServiceProvider().GetRequiredService<MigrationRunner>();
+    migrationRunner.Run();
+}
+```
+
+Not using ASP.NET Core? You can create the runner manually:
+```csharp
+// Skip dependency injection and run the migrations.
+
+// Create migration options, using all Migration objects found in the current assembly.
+var options = new MigrationOptions();
+options.Assemblies.Add(Assembly.GetExecutingAssembly());
+
+// Create a new migration runner. docStore is your RavenDB IDocumentStore. Logger is an ILogger<MigrationRunner>.
+var migrationRunner = new MigrationRunner(docStore, options, logger);
+migrationRunner.Run();
 ```
 
 Each important part of the migration is numbered:
 
-1. Every migration has to be decorated with the **MigrationAttribute**, and needs to be seeded it with a **long* value. We recommend you seed it with a **DateTime** stamp of yyyyMMddHHmmss ex. 20131031083545. This helps keeps teams for guessing and conflicting on the next migration number.
-2. Every migration needs to implement from the base class of **Migration**. This gives you access to base functionality and the ability to implement **Up** and **Down**.
+1. Every migration has to be decorated with the **MigrationAttribute**, and needs to be seeded it with a *long* value. For smaller teams, a simple integer will do (ex. the first patch has Migration(1), then the second patch has Migration(2), etc.) If you're working with a larger team, where patch numbers might collide, we recommend you seed it with a **DateTime** stamp of yyyyMMddHHmmss ex. 20131031083545. This helps keeps teams from guessing and conflicting on the next migration number.
+2. Every migration needs to implement from the base class of **Migration**. This gives you access to base functionality and the ability to implement **Up** and **Down**. It also gives you access to the Raven ``DocumentStore`` and an ``ILogger`` instance.
 3. **Up** is the method that occurs when a migration is executed. As you see above, we are adding a document.
 4. **Down** is the method that occurs when a migration is rolledback. This is not always possible, but if it is, then it most likely will be the reverse of **Up**.
 
@@ -67,7 +103,7 @@ After each migration is executed, a document of type **MigrationDocument** is in
 
 You can modify the runner options by declaring a **MigrationOptions** instance and passing it to the runner.
 
-```
+```csharp
 public class MigrationOptions
 {
     public MigrationOptions()
@@ -85,7 +121,7 @@ public class MigrationOptions
     public IList<Assembly> Assemblies { get; set; }
     public IList<string> Profiles { get; set; }
     public IMigrationResolver MigrationResolver { get; set; }
-    public long ToVersion { get; set; }
+    public int ToVersion { get; set; }
     public ILogger Logger { get; set; }
 }
 ```
@@ -94,21 +130,24 @@ public class MigrationOptions
 
 We understand there are times when you want to run specific migrations in certain environments, so Raven Migrations supports profiles. For instance, some migrations might only run during development, by decorating your migration with the profile of *"development"* and setting the options to include the profile will execute that migration.
 
-```
-	[Migration(3, "development")]
-    public class Development_Migration : Migration
+```csharp
+[Migration(3, "development")]
+public class Development_Migration : Migration
+{
+    public override void Up()
     {
-        public override void Up()
+        using (var session = Db.OpenSession())
         {
-            using (var session = DocumentStore.OpenSession())
-            {
-                session.Store(new { Id = "development-1" });
-                session.SaveChanges();
-            }
+            session.Store(new { Id = "development-1" });
+            session.SaveChanges();
         }
     }
+}
 
-    Runner.Run(store, new MigrationOptions { Profiles = new[] { "development" } });
+...
+// Add the MigrationRunner and configure it to run development migrations only.
+services.AddRavenDbMigrations(options => options.Profiles = new[] { "development" } });
+
 ```
 
 You can also specify that a particular profile belongs in more than one profile by setting multiple profile names in the attribute.
@@ -120,190 +159,107 @@ You can also specify that a particular profile belongs in more than one profile 
 This migration would run if either (or both) the development and demo profiles were specified in the MigrationOptions.
 
 ### Advanced Migrations
-Raven Migrations lets you migrate at the **RavenJObject** level, giving full access to the document and metadata.  This closely follows [Ayende's](https://github.com/ayende) approach porting the [MVC Music Store](http://ayende.com/blog/4519/porting-mvc-music-store-to-raven-advanced-migrations).  
+Inside each of your Migration instances, you should use RavenDB's <a href="https://ravendb.net/docs/article-page/4.0/csharp/client-api/operations/patching/set-based">patching APIs</a> to perform updates to collections and documents. We also provide helper methods on the Migration class for easy access, see below for examples.
 
-#### Alter.Collection
-```Alter.Collection``` works on a collection and gives access to the document and metadata:
+#### Migration.PatchCollection
+```Migration.PatchCollection``` is a helper method that <a href="https://ravendb.net/docs/article-page/4.0/csharp/client-api/operations/patching/set-based">patches a collection via RQL</a>.
 
-```
-Alter.Collection("People", (doc, metadata) => { ... });
-```
-
-Batching changes is taken care of with the default batch size being 128.  You can change the batch size if needed:
-```
-public void Collection(string tag, Action<RavenJObject, RavenJObject> action, int pageSize = 128)
+```csharp
+public override void Up()
+{
+   this.PatchCollection("from People update { p.Foo = 'Hello world!' }");
+}
 ```
 
-#### Example 1
+#### Example: Adding and deleting properties
 Let's say you start using a single property:
 
-```
-    public class Person
-    {
-        public string Id { get; set; }
-        public string Name { get; set; }
-    }
+```csharp
+public class Person
+{
+    public string Id { get; set; }
+    public string Name { get; set; }
+}
 ```
 But then want to change using two properties:
+```csharp
+public class Person
+{
+    public string Id { get; set; }
+    public string FirstName { get; set; }
+    public string LastName { get; set; }
+}
 ```
-    public class Person
+You now need to migrating your documents or you will lose data when you load your new ```Person```.  The following migration uses RQL to split out the first and last names:   
+
+```csharp
+[Migration(1)]
+public class PersonNameMigration : Migration
+{
+    public override void Up()
     {
-        public string Id { get; set; }
-        public string FirstName { get; set; }
-        public string LastName { get; set; }
-    }
-```
-You now need to migrating your documents or you will lose data when you load your new ```Person```.  The following migration uses ```Alter.Collection``` to split out the first and last names:   
-
-```
-    [Migration(1)]
-    public class PersonNameMigration : Migration
-    {
-        public override void Down()
-        {
-            Alter.Collection("People", MigratePerson2ToPerson1);
-        }
-
-        public override void Up()
-        {
-            Alter.Collection("People", MigratePerson1ToPerson2);
-        }
-
-        private void MigratePerson2ToPerson1(RavenJObject doc, RavenJObject metadata)
-        {
-            var first = doc.Value<string>("FirstName");
-            var last = doc.Value<string>("LastName");
-
-            doc["Name"] = first + " " + last;
-            doc.Remove("FirstName");
-            doc.Remove("LastName");
-        }
-
-        private void MigratePerson1ToPerson2(RavenJObject doc, RavenJObject metadata)
-        {
-            var name = doc.Value<string>("Name");
-            if (!string.IsNullOrEmpty(name))
-            {
-                doc["FirstName"] = name.Split(' ')[0];
-                doc["LastName"] = name.Split(' ')[1];
+        this.PatchCollection(@"
+            from People as p
+            update {
+                var names = p.Name.split(' ');
+                p.FirstName = names[0];
+                p.LastName = names[1];
+                delete p.Name;
             }
-            doc.Remove("Name");
-        }
+        ");
     }
-```
 
-#### Alter.CollectionWithAdditionalCommands
-```Alter.CollectionWithAdditionalCommands``` works just like ```Alter.Collection``` except the function you pass to it
-must return an ```IEnumerable<ICommandData>```. These are additional RavenDb commands that will be applied in the same transaction
-as the document of the collection you are modifying. So, if anything goes wrong, you can be sure that no documents of the
-collection were changed without also doing the corresponding "additional" changes. An example scenario: you want to migrate a field
-from one document to a different document. There are two things that need to happen: 1. remove the old field, 2. set the new field
-on the other document. With this helper method, you can batch both of those commands in the same transaction, so they'll both either
-pass or fail together. An example of an additional command:
-
-```
-new PutCommand {
-    Document = new RavenJObject(),
-    Key = "foobar/1",
-    Metadata = new RavenJObject()
-}
-```
-
-#### Working with Metadata
-Let's say that you refactor and move ```Person``` to another assembly.  So that RavenDB will load the data into the new class, you will need to adjust the metadata in the collection for the new CLR type.
-
-```
-    [Migration(2)]
-    public class MovePersonMigration : Migration
+    // Undo the patch
+    public override void Down()
     {
-        public override void Up()
-        {
-            Alter.Collection("People",
-                (doc, metadata) =>
-                {
-                    metadata[Constants.RavenClrType] = "MyProject.Person, MyProject";
-                });
-        }
-
-        public override void Down()
-        {
-            Alter.Collection("People",
-                (doc, metadata) =>
-                {
-                    metadata[Constants.RavenClrType] = "MyProject.Domain.Person, Domain";
-                });
-        }
-    }
-```
-
-### Custom migration attributes
-
-If the `long` version number does not fit your versioning scheme, a custom
-attribute can inherit from `MigrationAttribute`.
-
-Example implementation for semantic versions:
-```
-    public class MigrationVersionAttribute : MigrationAttribute
-    {
-        public MigrationVersionAttribute(int major, int minor, int patch, int migration, params string [] profiles)
-            :base(CreateVersionNumber(major, minor, patch, migration), profiles)
-        {
-
-        }
-
-        private static long CreateVersionNumber(int major, int minor, int patch, int migration)
-        {
-            return major*100000000000L + minor*10000000L + patch*1000L + migration;
-        }
+        this.PatchCollection("this.Name = this.FirstName + ' ' + this.LastName;");
     }
 }
-```
-
-Example usage in a migration:
-```
-    [MigrationVersion(6, 9, 11, 1)]
-    public class CustomVersionMigration : Migration
-    {
-        public override void Up() { /* ... */ }
-    }    
-```
-
-## Logging
-
-Specify a logger when configuring the runner.
-
-By default the `ConsoleLogger` is used.
-
-Implement the `RavenMigrations.ILogger` interface to create your own logger:
-
-```
-void WriteInformation(string format, params object[] args);
-void WriteError(string format, params object[] args);
-void WriteWarning(string format, params object[] args);
 ```
 
 ## Integration
 
-We suggest you run the migrations at the start of your application to ensure that any new changes you have made apply to your application before you application starts. If you do not want to do it here, you can choose to do it out of band using a seperate application.
+We suggest you run the migrations at the start of your application to ensure that any new changes you have made apply to your application before you application starts. If you do not want to do it here, you can choose to do it out of band using a seperate application. If you're using ASP.NET Core, you can run them in your Startup.cs
+
+```csharp
+    public void ConfigureServices(IServiceCollection services)
+    {
+        // Add the MigrationRunner singleton into the dependency injection container.
+        services.AddRavenDbMigrations();
+
+        // ...
+   
+        // Get the migration runner and execute pending migrations.
+        var migrationRunner = services.BuildServiceProvider().GetRequiredService<MigrationRunner>();
+        migrationRunner.Run();
+    }
+```
+
+Not using ASP.NET Core? You can create the runner manually:
+```csharp
+    // Skip dependency injection and run the migrations.
+
+    // Create migration options, using all Migration objects found in the current assembly.
+    var options = new MigrationOptions();
+    options.Assemblies.Add(Assembly.GetExecutingAssembly());
+
+    // Create a new migration runner. docStore is your RavenDB IDocumentStore. Logger is an ILogger<MigrationRunner>.
+    var migrationRunner = new MigrationRunner(docStore, options, logger);
+    migrationRunner.Run();
+```
 
 ### Solution Structure
 
-We recommend you create a folder called Migrations, then name your files according to the migration long value. For example
+We recommend you create a folder called Migrations, then name your files according to the migration number and name:
 
 ```
 \Migrations
-    - 20131010120000_FirstMigration.cs
-    - 20131010120001_SecondMigration.cs
-    - 20131110120001_ThirdMigration.cs
-    - etc....
+    - 001_FirstMigration.cs
+    - 002_SecondMigration.cs
+    - 003_ThirdMigration.cs
 ```
 
 The advantage to this approach, is that your IDE will order the migrations alpha-numerically allowing you to easily find the first and last migration.
-
-## Gotchas
-
-1. If you use a domain model in your migration, be prepared for that migration to break if properties are removed critical to the migration. There are ways to be safe about breaking migrations. One approach is to use **RavenJObject** instead of your domain types.
-
 
 ## Contributing
 
@@ -311,7 +267,7 @@ Contributions of any size are always welcome! Please read our [Code of Conduct](
 
 ## Thanks
 
-Thanks goes to [Sean Kearon](https://github.com/seankearon) who helped dog food this migration framework and contribute to it.
+Thanks goes to [Sean Kearon](https://github.com/seankearon) who helped dog food this migration framework and contribute to it. Also to Darrel Portzline and Khalid Abuhakmeh for their work on an earlier version of this project.
 
 ## Versioning
 
