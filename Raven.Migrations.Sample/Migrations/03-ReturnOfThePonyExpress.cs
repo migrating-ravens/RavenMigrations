@@ -1,8 +1,5 @@
 ﻿using Raven.Migrations.Sample.Model;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Raven.Migrations.Sample.Migrations
 {

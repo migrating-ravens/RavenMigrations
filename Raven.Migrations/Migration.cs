@@ -1,7 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using Raven.Client.Documents;
 using Raven.Client.Documents.Operations;
-using Raven.Client.Documents.Session;
 using System;
 using System.Linq.Expressions;
 
