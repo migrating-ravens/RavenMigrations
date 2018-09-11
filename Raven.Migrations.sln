@@ -3,16 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27703.2042
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{EC586C7A-19D8-46DF-BCFD-DC5F39C2D2BB}"
-	ProjectSection(SolutionItems) = preProject
-		.nuget\NuGet.Config = .nuget\NuGet.Config
-		.nuget\NuGet.exe = .nuget\NuGet.exe
-		.nuget\NuGet.targets = .nuget\NuGet.targets
-	EndProjectSection
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Raven.Migrations", "Raven.Migrations\Raven.Migrations.csproj", "{A907F9FB-30D1-499C-9B33-D891836F5C4E}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Raven.Migrations.Test", "Raven.Migrations.Tests\Raven.Migrations.Test.csproj", "{15BE5B48-F714-436A-8433-7CEF68D410AF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Raven.Migrations.Test", "Raven.Migrations.Tests\Raven.Migrations.Tests.csproj", "{15BE5B48-F714-436A-8433-7CEF68D410AF}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{5A09B7FE-D694-45B5-BCBC-256A8E06CFC5}"
 	ProjectSection(SolutionItems) = preProject

@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
-namespace Raven.Migrations.Sample.Migrations
+﻿namespace Raven.Migrations.Sample.Migrations
 {
     /// <summary>
     /// Migration that adds an .Expendability property to all Employees.
