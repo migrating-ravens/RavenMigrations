@@ -13,12 +13,16 @@ namespace Raven.Migrations
             MigrationResolver = new DefaultMigrationResolver();
             Assemblies = new List<Assembly>();
             ToVersion = 0;
+            Conventions = new MigrationConventions();
         }
 
+        public string Database { get; set; }
         public Directions Direction { get; set; }
         public IList<Assembly> Assemblies { get; set; }
         public IList<string> Profiles { get; set; }
         public IMigrationResolver MigrationResolver { get; set; }
         public int ToVersion { get; set; }
+        public MigrationConventions Conventions { get; set; }
+        public IMigrationRecordStore MigrationRecordStore { get; set; }
     }
 }

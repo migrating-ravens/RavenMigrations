@@ -25,7 +25,7 @@ namespace Raven.Migrations.Tests
                 var professorZoom = InitialiseWithPerson(store, "Professor", "Zoom");
 
                 var migration = new AddFullName();
-                migration.Setup(store, logger);
+                migration.Setup(store, new MigrationOptions(), logger);
 
                 migration.Up();
 
@@ -45,7 +45,7 @@ namespace Raven.Migrations.Tests
                 var ladyDeathstrike = InitialiseWithPerson(store, "Lady", "Deathstrike");
 
                 var migration = new AddFullName();
-                migration.Setup(store, logger);
+                migration.Setup(store, new MigrationOptions(), logger);
 
                 migration.Up();
                 WaitForIndexing(store);
@@ -71,7 +71,7 @@ namespace Raven.Migrations.Tests
                 var scarletSpider = InitialiseWithPerson(store, "Scarlet", "Spider");
 
                 var migration = new AddFullName();
-                migration.Setup(store, loggerMock.Object);
+                migration.Setup(store, new MigrationOptions(), loggerMock.Object);
 
                 migration.Up();
             }
@@ -95,7 +95,7 @@ namespace Raven.Migrations.Tests
                     new Person {FirstName = "Killer", LastName = "Croc" }
                 });
                 var migration = new AddFullName();
-                migration.Setup(store, loggerMock.Object);
+                migration.Setup(store, new MigrationOptions(), loggerMock.Object);
 
                 migration.Up();
             }

@@ -11,7 +11,11 @@ namespace Raven.Migrations
     /// </summary>
     public abstract class Migration
     {
-        protected IDocumentStore Db { get; private set; }
+        [Obsolete("use DocumentStore instead")]
+        protected IDocumentStore Db => DocumentStore;
+
+        protected IDocumentStore DocumentStore { get; private set; }
+        protected string Database { get; private set; }
         protected ILogger Logger { get; private set; }
 
         /// <summary>
@@ -26,9 +30,13 @@ namespace Raven.Migrations
         {
         }
 
-        public virtual void Setup(IDocumentStore documentStore, ILogger logger)
+        public virtual void Setup(
+            IDocumentStore documentStore,
+            MigrationOptions options,
+            ILogger logger)
         {
-            Db = documentStore;
+            DocumentStore = documentStore;
+            Database = options.Database;
             Logger = logger;
         }
 
@@ -48,7 +56,7 @@ namespace Raven.Migrations
         /// </example>
         protected void PatchDocument<TEntity, TValue>(string entityId, Expression<Func<TEntity, TValue>> propertySelector, TValue newValue)
         {
-            using (var session = Db.OpenSession())
+            using (var session = DocumentStore.OpenSession(Database))
             {
                 session.Advanced.WaitForIndexesAfterSaveChanges(TimeSpan.FromSeconds(30), false);
                 session.Advanced.Patch(entityId, propertySelector, newValue);
@@ -72,7 +80,7 @@ namespace Raven.Migrations
         /// </example>
         protected Operation PatchCollection(string rql, bool waitForCompletion = true)
         {
-            var operation = this.Db.Operations.Send(new PatchByQueryOperation(rql));
+            var operation = DocumentStore.Operations.ForDatabase(Database).Send(new PatchByQueryOperation(rql));
             if (waitForCompletion)
             {
                 operation.WaitForCompletion();

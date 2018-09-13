@@ -10,27 +10,25 @@ namespace Raven.Migrations
     {
         public static readonly string RavenMigrationsIdPrefix = "MigrationRecord";
 
-        public static string GetMigrationIdFromName(this Migration migration, char seperator = '/')
+        public static string GetMigrationDocumentId(Migration migration, char separator)
         {
-            const char underscore = '_';
+            const char Underscore = '_';
             var type = migration.GetType();
-            var idSafeTypeName = Regex.Replace(type.Name, underscore + "{2,}", underscore.ToString())
-                .Trim(underscore);
+            var idSafeTypeName = Regex.Replace(type.Name, Underscore + "{2,}", Underscore.ToString())
+                .Trim(Underscore);
             var name = idSafeTypeName
-                .Replace(underscore, seperator)
+                .Replace(Underscore, separator)
                 .ToLowerInvariant();
             var version = type.GetMigrationAttribute().Version;
 
-            return string.Join(seperator.ToString(), new[] {
-                RavenMigrationsIdPrefix, name, version.ToString()
-            }).ToLowerInvariant();
+            return string.Join(separator.ToString(), RavenMigrationsIdPrefix, name, version.ToString()).ToLowerInvariant();
         }
 
         public static MigrationAttribute GetMigrationAttribute(this Type type)
         {
             var attribute = Attribute.GetCustomAttributes(type)
                 .FirstOrDefault(x => x is MigrationAttribute);
-            return (MigrationAttribute)attribute;
+            return (MigrationAttribute) attribute;
         }
 
         public static IEnumerable<Type> GetLoadableTypes(this Assembly assembly)
@@ -39,6 +37,7 @@ namespace Raven.Migrations
             {
                 throw new ArgumentNullException(nameof(assembly));
             }
+
             try
             {
                 return assembly.GetTypes();
@@ -48,5 +47,9 @@ namespace Raven.Migrations
                 return e.Types.Where(t => t != null);
             }
         }
+
+        public static readonly Func<Type, bool> TypeIsMigration = t => typeof(Migration).IsAssignableFrom(t)
+                                                                       && !t.IsAbstract
+                                                                       && t.GetConstructor(Type.EmptyTypes) != null;
     }
 }

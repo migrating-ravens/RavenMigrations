@@ -18,21 +18,24 @@ namespace Raven.Migrations.Tests
         [Fact]
         public void Can_change_migration_document_seperator_to_dash()
         {
-            new First_Migration().GetMigrationIdFromName(seperator: '-')
+            var options = new MigrationOptions();
+            options.Conventions.MigrationDocumentId(new First_Migration(), '-')
                 .Should().Be("migrationrecord-first-migration-1");
         }
 
         [Fact]
         public void Can_get_migration_id_from_migration()
         {
-            var id = new First_Migration().GetMigrationIdFromName();
+            var options = new MigrationOptions();
+            var id = options.Conventions.MigrationDocumentId(new First_Migration(), '/');
             id.Should().Be("migrationrecord/first/migration/1");
         }
 
         [Fact]
         public void Can_get_migration_id_from_migration_and_correct_leading_or_multiple_underscores()
         {
-            var id = new _has_problems__with_underscores___().GetMigrationIdFromName();
+            var options = new MigrationOptions();
+            var id = options.Conventions.MigrationDocumentId(new _has_problems__with_underscores___(), '/');
             id.Should().Be("migrationrecord/has/problems/with/underscores/5");
         }
 
@@ -187,12 +190,12 @@ namespace Raven.Migrations.Tests
                         .Count()
                         .Should().Be(1);
 
-                    var secondMigrationDocument =
-                        session.Load<MigrationRecord>(new Second_Migration().GetMigrationIdFromName());
+                    var secondId = options.Conventions.MigrationDocumentId(new Second_Migration(), '/');
+                    var secondMigrationDocument = session.Load<MigrationRecord>(secondId);
                     secondMigrationDocument.Should().BeNull();
 
-                    var firstMigrationDocument =
-                        session.Load<MigrationRecord>(new First_Migration().GetMigrationIdFromName());
+                    var id = options.Conventions.MigrationDocumentId(new First_Migration(), '/');
+                    var firstMigrationDocument = session.Load<MigrationRecord>(id);
                     firstMigrationDocument.Should().NotBeNull();
                 }
             }
