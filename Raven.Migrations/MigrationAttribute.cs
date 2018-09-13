@@ -21,5 +21,6 @@ namespace Raven.Migrations
 
         public long Version { get; set; }
         public IEnumerable<string> Profiles { get; set; }
+        public string Description { get; set; }
     }
 }

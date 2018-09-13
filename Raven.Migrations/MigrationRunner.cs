@@ -11,13 +11,13 @@ namespace Raven.Migrations
     /// </summary>
     public class MigrationRunner
     {
-        private readonly IDocumentStore docStore;
+        private readonly IDocumentStore store;
         private readonly MigrationOptions options;
         private readonly ILogger<MigrationRunner> logger;
 
-        public MigrationRunner(IDocumentStore docStore, MigrationOptions options, ILogger<MigrationRunner> logger)
+        public MigrationRunner(IDocumentStore store, MigrationOptions options, ILogger<MigrationRunner> logger)
         {
-            this.docStore = docStore ?? throw new ArgumentNullException(nameof(docStore));
+            this.store = store ?? throw new ArgumentNullException(nameof(store));
             this.options = options ?? throw new ArgumentNullException(nameof(options));
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
@@ -28,46 +28,55 @@ namespace Raven.Migrations
         public void Run()
         {
             var migrations = FindAllMigrationsWithOptions(options);
+            var recordStore = options.MigrationRecordStore ?? new DefaultMigrationRecordStore(store, options);
 
+            int runCount = 0;
+            int skipCount = 0;
             foreach (var pair in migrations)
             {
                 var migration = pair.Migration();
-                migration.Setup(this.docStore, this.logger);
-                var migrationId = migration.GetMigrationIdFromName(this.docStore.Conventions.IdentityPartsSeparator[0]);
+                migration.Setup(store, options, logger);
+                var migrationId = options.Conventions.MigrationDocumentId(migration, store.Conventions.IdentityPartsSeparator[0]);
+                var migrationDoc = recordStore.Load(migrationId);
 
-                using (var session = this.docStore.OpenSession())
+                switch (options.Direction)
                 {
-                    var migrationDoc = session.Load<MigrationRecord>(migrationId);
+                    case Directions.Down:
+                        if (migrationDoc == null)
+                        {
+                            skipCount++;
+                            continue;
+                        }
 
-                    switch (options.Direction)
-                    {
-                        case Directions.Down:
-                            if (migrationDoc == null)
-                                continue;
+                        logger.LogInformation("{0}: Down migration started", migration.GetType().Name);
+                        migration.Down();
+                        recordStore.Delete(migrationDoc);
+                        logger.LogInformation("{0}: Down migration completed", migration.GetType().Name);
+                        runCount++;
+                        break;
+                    default:
+                        // we already ran it
+                        if (migrationDoc != null)
+                        {
+                            skipCount++;
+                            continue;
+                        }
 
-                            logger.LogInformation("{0}: Down migration started", migration.GetType().Name);
-                            migration.Down();
-                            session.Delete(migrationDoc);
-                            logger.LogInformation("{0}: Down migration completed", migration.GetType().Name);
-                            break;
-                        default:
-                            // we already ran it
-                            if (migrationDoc != null)
-                                continue;
-
-                            logger.LogInformation("{0}: Up migration started", migration.GetType().Name);
-                            migration.Up();
-                            session.Store(new MigrationRecord { Id = migrationId });
-                            logger.LogInformation("{0}: Up migration completed", migration.GetType().Name);
-                            break;
-                    }
-
-                    session.SaveChanges();
-
-                    if (pair.Attribute.Version == options.ToVersion)
+                        logger.LogInformation("{0}: Up migration started", migration.GetType().Name);
+                        migration.Up();
+                        recordStore.Store(migrationId);
+                        logger.LogInformation("{0}: Up migration completed", migration.GetType().Name);
+                        runCount++;
                         break;
                 }
+
+                if (pair.Attribute.Version == options.ToVersion)
+                {
+                    break;
+                }
             }
+
+            logger.LogInformation($"{runCount} migrations executed, {skipCount} skipped as unnecessary");
         }
 
         /// <summary>
@@ -80,9 +89,7 @@ namespace Raven.Migrations
             var migrationsToRun = 
                 from assembly in options.Assemblies
                 from t in assembly.GetLoadableTypes()
-                where typeof(Migration).IsAssignableFrom(t)
-                      && !t.IsAbstract
-                      && t.GetConstructor(Type.EmptyTypes) != null
+                where options.Conventions.TypeIsMigration(t)
                 select new MigrationWithAttribute
                 {
                     Migration = () => options.MigrationResolver.Resolve(t),
