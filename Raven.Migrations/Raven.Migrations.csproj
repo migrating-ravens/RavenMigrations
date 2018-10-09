@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Version>3.0.0</Version>
+    <Version>4.1.0</Version>
     <PackageId>RavenMigrations</PackageId>
     <Authors>Darrel Portzline, Khalid Abuhakmeh, Judah Gabriel Himango</Authors>
     <Company>BitShuva</Company>
@@ -15,7 +15,7 @@
     <PackageProjectUrl>https://github.com/migrating-ravens/RavenMigrations</PackageProjectUrl>
     <PackageLicenseUrl>https://github.com/migrating-ravens/RavenMigrations/blob/master/LICENSE.txt</PackageLicenseUrl>
     <PackageTags>ravendb, nosql, migration, schema</PackageTags>
-    <PackageReleaseNotes>Upgrade to Raven 4, .NET Core 2.1.</PackageReleaseNotes>
+    <PackageReleaseNotes>Extension points for migration, targeting .NET Standard 2.0.</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
