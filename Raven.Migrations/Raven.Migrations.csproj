@@ -10,12 +10,17 @@
     <Description>Raven Migrations is a migration framework for RavenDB to help with updates to your database objects.</Description>
     <Copyright>BitShuva 2018</Copyright>
     <Product>RavenDB.Migrations</Product>
-    <RepositoryUrl>https://github.com/migrating-ravens/RavenMigrations</RepositoryUrl>
     <PackageIconUrl>https://raw.githubusercontent.com/JudahGabriel/RavenMigrations/master/Raven.Migrations/logo-for-nuget.png</PackageIconUrl>
     <PackageProjectUrl>https://github.com/migrating-ravens/RavenMigrations</PackageProjectUrl>
     <PackageLicenseUrl>https://github.com/migrating-ravens/RavenMigrations/blob/master/LICENSE.txt</PackageLicenseUrl>
     <PackageTags>ravendb, nosql, migration, schema</PackageTags>
     <PackageReleaseNotes>Extension points for migration, targeting .NET Standard 2.0.</PackageReleaseNotes>
+
+    <!-- SourceLink support -->
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
+
   </PropertyGroup>
 
   <ItemGroup>
@@ -23,6 +28,10 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="2.1.0" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="2.1.0" />
     <PackageReference Include="RavenDB.Client" Version="4.0.7" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(SourceLinkEnabled)' != 'false'">
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0-beta-63127-02" PrivateAssets="All"/>
   </ItemGroup>
 
 </Project>
