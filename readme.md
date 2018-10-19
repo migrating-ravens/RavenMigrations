@@ -39,7 +39,7 @@ public class First_Migration : Migration // #2 inherit from Migration
         this.PatchCollection(@"
             from People as person
             update {
-                person.FullName = person.FirstName + " " + person.LastName;
+                person.FullName = person.FirstName + ' ' + person.LastName;
             }
         ");
     }
