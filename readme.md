@@ -33,43 +33,44 @@ A migration looks like the following:
 [Migration(1)]                 
 public class First_Migration : Migration // #2 inherit from Migration
 {
-    // #3 Do the migration
+    // #3 Do the migration using RQL.
     public override void Up()
     {
-        using (var session = Db.OpenSession())
-        {
-            session.Store(new TestDocument 
-            { 
-                Id = "TestDocuments/1",
-                Name = "Khalid Abuhakmeh" 
-            });
-            session.SaveChanges();
-        }
+        this.PatchCollection(@"
+            from People as person
+            update {
+                person.FullName = person.FirstName + " " + person.LastName;
+            }
+        ");
     }
     // #4 optional: undo the migration
     public override void Down()
     {
-        using (var session = Db.OpenSession())
-        {
-            session.Delete("TestDocuments/1");
-            session.SaveChanges();
-        }
+        this.PatchCollection(@"
+            from People as person
+            update {
+                delete person.FullName;
+            }
+        ");
     }
 }
 ```
 
-To run the migrations, you can use Microsoft's Dependency Injection:
+To run the migrations, here's how it'd look in an ASP.NET Core app.
+
 ```csharp
+// In Startup.cs
 public void ConfigureServices(IServiceCollection services)
 {
     // Add the MigrationRunner into the dependency injection container.
     services.AddRavenDbMigrations();
+}
 
-    // ...
-   
-    // Get the migration runner and execute pending migrations.
-    var migrationRunner = services.BuildServiceProvider().GetRequiredService<MigrationRunner>();
-    migrationRunner.Run();
+public void Configure(IApplicationBuilder app, ...)
+{
+    // Run pending Raven migrations.
+    var migrationService = app.ApplicationServices.GetRequiredService<MigrationRunner>();
+    migrationService.Run();
 }
 ```
 
