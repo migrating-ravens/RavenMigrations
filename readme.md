@@ -31,7 +31,7 @@ A migration looks like the following:
 ```csharp
 // #1 - specify the migration number
 [Migration(1)]                 
-public class First_Migration : Migration // #2 inherit from Migration
+public class PeopleHaveFullNames : Migration // #2 inherit from Migration
 {
     // #3 Do the migration using RQL.
     public override void Up()
