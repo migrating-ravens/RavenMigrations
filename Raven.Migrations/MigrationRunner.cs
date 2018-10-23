@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using Microsoft.Extensions.Logging;
 using Raven.Client.Documents;
@@ -32,6 +33,19 @@ namespace Raven.Migrations
 
             int runCount = 0;
             int skipCount = 0;
+
+            void ExecuteMigration(Directions direction, long version, Migration migration, Action action)
+            {
+                string migrationDirection = direction == Directions.Down ? "Down" : "Up";
+                logger.LogInformation("[{0}] {1}: {2} migration started", version, migration.GetType().Name, migrationDirection);
+                var migrationStopwatch = Stopwatch.StartNew();
+                action();
+                migrationStopwatch.Stop();
+                logger.LogInformation("[{0}] {1}: {2} migration completed in {3}", version, migration.GetType().Name, migrationDirection, migrationStopwatch.Elapsed);
+                runCount++;
+            }
+
+            var sw = Stopwatch.StartNew();
             foreach (var pair in migrations)
             {
                 var migration = pair.Migration();
@@ -48,13 +62,13 @@ namespace Raven.Migrations
                             continue;
                         }
 
-                        logger.LogInformation("{0}: Down migration started", migration.GetType().Name);
-                        migration.Down();
-                        recordStore.Delete(migrationDoc);
-                        logger.LogInformation("{0}: Down migration completed", migration.GetType().Name);
-                        runCount++;
+                        ExecuteMigration(options.Direction, pair.Attribute.Version, migration, () => {
+                            migration.Down();
+                            recordStore.Delete(migrationDoc);
+                        });
+
                         break;
-                    default:
+                    case Directions.Up:
                         // we already ran it
                         if (migrationDoc != null)
                         {
@@ -62,12 +76,13 @@ namespace Raven.Migrations
                             continue;
                         }
 
-                        logger.LogInformation("{0}: Up migration started", migration.GetType().Name);
-                        migration.Up();
-                        recordStore.Store(migrationId);
-                        logger.LogInformation("{0}: Up migration completed", migration.GetType().Name);
-                        runCount++;
+                        ExecuteMigration(options.Direction, pair.Attribute.Version, migration, () => {
+                            migration.Up();
+                            recordStore.Store(migrationId);
+                        });
                         break;
+                    default:
+                        throw new ArgumentOutOfRangeException(nameof(options.Direction));
                 }
 
                 if (pair.Attribute.Version == options.ToVersion)
@@ -76,7 +91,8 @@ namespace Raven.Migrations
                 }
             }
 
-            logger.LogInformation($"{runCount} migrations executed, {skipCount} skipped as unnecessary");
+            sw.Stop();
+            logger.LogInformation($"{runCount} migrations executed, {skipCount} skipped as unnecessary, took {sw.Elapsed}");
         }
 
         /// <summary>
