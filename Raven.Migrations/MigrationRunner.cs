@@ -92,7 +92,7 @@ namespace Raven.Migrations
             }
 
             sw.Stop();
-            logger.LogInformation($"{runCount} migrations executed, {skipCount} skipped as unnecessary, took {sw.Elapsed}");
+            logger.LogInformation("{migrationCount} migrations executed, {skipCount} skipped as unnecessary, took {elapsed}", runCount, skipCount, sw.Elapsed);
         }
 
         /// <summary>
