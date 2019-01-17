@@ -8,7 +8,7 @@ using Xunit;
 
 namespace Raven.Migrations.Tests
 {
-    public class AlterTests : RavenTestDriver
+    public class MigrationTests : RavenTestDriver
     {
         private ILogger logger = new ConsoleLogger();
         
