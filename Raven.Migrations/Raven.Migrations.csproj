@@ -3,18 +3,18 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Version>4.1.4</Version>
+    <Version>4.1.5</Version>
     <PackageId>RavenMigrations</PackageId>
     <Authors>Darrel Portzline, Khalid Abuhakmeh, Judah Gabriel Himango</Authors>
     <Company>BitShuva</Company>
     <Description>Raven Migrations is a migration framework for RavenDB to help with updates to your database objects.</Description>
-    <Copyright>BitShuva 2018</Copyright>
+    <Copyright>BitShuva 2019</Copyright>
     <Product>RavenDB.Migrations</Product>
-    <PackageIconUrl>https://raw.githubusercontent.com/JudahGabriel/RavenMigrations/master/Raven.Migrations/logo-for-nuget.png</PackageIconUrl>
+    <PackageIconUrl>https://raw.githubusercontent.com/migrating-ravens/RavenMigrations/master/Raven.Migrations/logo-for-nuget.png</PackageIconUrl>
     <PackageProjectUrl>https://github.com/migrating-ravens/RavenMigrations</PackageProjectUrl>
     <PackageLicenseUrl>https://github.com/migrating-ravens/RavenMigrations/blob/master/LICENSE.txt</PackageLicenseUrl>
     <PackageTags>ravendb, nosql, migration, schema</PackageTags>
-    <PackageReleaseNotes>Migrations options ToVersion also supports long version numbers.</PackageReleaseNotes>
+    <PackageReleaseNotes>Migrations can now rely on dependency-injected services.</PackageReleaseNotes>
 
     <!-- SourceLink support -->
     <PublishRepositoryUrl>true</PublishRepositoryUrl>

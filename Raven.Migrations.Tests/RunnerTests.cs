@@ -59,13 +59,13 @@ namespace Raven.Migrations.Tests
         {
             var options = new MigrationOptions();
             options.MigrationResolver.Should().NotBeNull();
-            options.MigrationResolver.Should().BeOfType<DefaultMigrationResolver>();
+            options.MigrationResolver.Should().BeOfType<SimpleMigrationResolver>();
         }
 
         [Fact]
         public void Default_migration_resolver_can_instantiate_a_migration()
         {
-            var migration = new DefaultMigrationResolver().Resolve(typeof(First_Migration));
+            var migration = new SimpleMigrationResolver().Resolve(typeof(First_Migration));
             migration.Should().NotBeNull();
         }
 

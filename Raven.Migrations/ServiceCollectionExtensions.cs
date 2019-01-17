@@ -15,40 +15,64 @@ namespace Raven.Migrations
         /// Adds a Raven <see cref="MigrationRunner"/> singleton to the dependency injection container. Uses the <see cref="IDocumentStore"/> inside the dependency injection container.
         /// </summary>
         /// <param name="services">The dependency injection container.</param>
+        /// <returns>A <see cref="MigrationRunner"/> which can be used to run the pending migrations.</returns>
+        public static IServiceCollection AddRavenDbMigrations(this IServiceCollection services)
+        {
+            return CreateMigrationRunner(services, null, null, Assembly.GetCallingAssembly());
+        }
+
+        /// <summary>
+        /// Adds a Raven <see cref="MigrationRunner"/> singleton to the dependency injection container. Uses the <see cref="IDocumentStore"/> inside the dependency injection container.
+        /// </summary>
+        /// <param name="services">The dependency injection container.</param>
         /// <param name="configuration">A function that configures the migration options.</param>
         /// <returns>A <see cref="MigrationRunner"/> which can be used to run the pending migrations.</returns>
-        public static IServiceCollection AddRavenDbMigrations(this IServiceCollection services, Action<MigrationOptions> configuration = null)
+        public static IServiceCollection AddRavenDbMigrations(this IServiceCollection services, Action<MigrationOptions> configuration)
         {
-            var options = new MigrationOptions();
-            configuration?.Invoke(options);
-            if (options.Assemblies.Count == 0)
-            {
-                options.Assemblies.Add(Assembly.GetCallingAssembly());
-            }
-            
-            return services.AddSingleton(provider =>
-            {
-                var docStore = provider.GetRequiredService<IDocumentStore>();
-                var logger = provider.GetRequiredService<ILogger<MigrationRunner>>();
-                return new MigrationRunner(docStore, options, logger);
-            });
+            return CreateMigrationRunner(services, configuration, null, Assembly.GetCallingAssembly());
         }
 
         /// <summary>
         /// Adds a Raven <see cref="MigrationRunner"/> singleton to the dependency injection services using the specified <see cref="IDocumentStore"/>.
         /// </summary>
         /// <param name="services">The dependency injection container.</param>
+        /// <param name="configuration">An action that sets the migration configuration. Can be null.</param>
+        /// <param name="docStore">The <see cref="IDocumentStore"/> to run the migrations against. Can be null. If null, an <see cref="IDocumentStore"/> must be available in the DI container.</param>
         /// <returns>A <see cref="MigrationRunner"/> which can be used to run the pending migrations.</returns>
-        public static IServiceCollection AddRavenDbMigrations(this IServiceCollection services, IDocumentStore docStore, Action<MigrationOptions> configuration = null)
+        public static IServiceCollection AddRavenDbMigrations(this IServiceCollection services, Action<MigrationOptions> configuration, IDocumentStore docStore)
         {
-            var options = new MigrationOptions();
+            return CreateMigrationRunner(services, configuration, docStore, Assembly.GetCallingAssembly());
+        }
+
+        private static IServiceCollection CreateMigrationRunner(
+            IServiceCollection services, 
+            Action<MigrationOptions> configuration, 
+            IDocumentStore docStore, 
+            Assembly assembly)
+        {
+            if (assembly == null)
+            {
+                assembly = Assembly.GetEntryAssembly();
+            }
+
+            return services.AddSingleton(provider => CreateMigrationRunnerFromProvider(provider, assembly, configuration, docStore));
+        }
+
+        private static MigrationRunner CreateMigrationRunnerFromProvider(IServiceProvider provider, Assembly callingAssembly, Action<MigrationOptions> configuration = null, IDocumentStore store = null)
+        {
+            var migrationResolver = new DependencyInjectionMigrationResolver(provider);
+            var options = new MigrationOptions(migrationResolver);
             configuration?.Invoke(options);
             if (options.Assemblies.Count == 0)
             {
-                options.Assemblies.Add(Assembly.GetCallingAssembly());
+                // No assemblies configured? Use the assembly that called .AddRavenDbMigrations.
+                options.Assemblies.Add(callingAssembly);
+                options.Assemblies.Add(Assembly.GetEntryAssembly());
             }
 
-            return services.AddSingleton(provider => new MigrationRunner(docStore, options, provider.GetRequiredService<ILogger<MigrationRunner>>()));
+            var docStore = store ?? provider.GetRequiredService<IDocumentStore>();
+            var logger = provider.GetRequiredService<ILogger<MigrationRunner>>();
+            return new MigrationRunner(docStore, options, logger);
         }
     }
 }

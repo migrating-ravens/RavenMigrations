@@ -100,31 +100,15 @@ In every migration you have access to the document store, so you are able to do 
 
 Raven Migrations comes with a migration runner. It scans all provided assemblies for any classes implementing the **Migration** base class and then orders them according to their migration value.
 
-After each migration is executed, a document of type **MigrationDocument** is inserted into your database, to insure the next time the runner is executed that migration is not executed again. When a migration is rolled back the document is removed.
+After each migration is executed, a document of type **MigrationDocument** is inserted into your database, to ensure the next time the runner is executed that migration is not executed again. When a migration is rolled back the document is removed.
 
-You can modify the runner options by declaring a **MigrationOptions** instance and passing it to the runner.
+You can modify the runner options by passing an action to the .AddRavenDbMigrations call:
 
 ```csharp
-public class MigrationOptions
+services.AddRavenDbMigrations(options =>
 {
-    public MigrationOptions()
-    {
-         Direction = Directions.Up;
-         Assemblies = new List<Assembly>();
-         Profiles = new List<string>();
-         MigrationResolver = new DefaultMigrationResolver();
-         Assemblies = new List<Assembly>();
-         ToVersion = 0;
-         Logger = new ConsoleLogger();
-    }
-
-    public Directions Direction { get; set; }
-    public IList<Assembly> Assemblies { get; set; }
-    public IList<string> Profiles { get; set; }
-    public IMigrationResolver MigrationResolver { get; set; }
-    public int ToVersion { get; set; }
-    public ILogger Logger { get; set; }
-}
+   // Configure the migration options here
+});
 ```
 
 ### Profiles
@@ -172,8 +156,28 @@ public override void Up()
 }
 ```
 
+#### Migrations using dependency injection services
+```csharp
+[Migration(1)]
+public class MyMigrationUsingServices : Migration
+{
+	private IFoo foo;
+
+	// Inject an IFoo for use in our patch.
+	public MyMigrationUsingServices(IFoo foo)
+	{
+		this.foo = foo;
+	}
+
+	public override void Up()
+	{
+		// Do something with foo
+	}
+}
+```
+
 #### Example: Adding and deleting properties
-Let's say you start using a single property:
+Let's say you start using a single Name property:
 
 ```csharp
 public class Person
@@ -182,7 +186,7 @@ public class Person
     public string Name { get; set; }
 }
 ```
-But then want to change using two properties:
+But then want to change using two properties, FirstName and LastName:
 ```csharp
 public class Person
 {
@@ -191,7 +195,7 @@ public class Person
     public string LastName { get; set; }
 }
 ```
-You now need to migrating your documents or you will lose data when you load your new ```Person```.  The following migration uses RQL to split out the first and last names:   
+You now need to migrate your documents or you will lose data when you load your new ```Person```.  The following migration uses RQL to split out the first and last names:
 
 ```csharp
 [Migration(1)]
