@@ -2,6 +2,7 @@
 using Raven.Client.Documents;
 using Raven.Client.Documents.Operations;
 using System;
+using System.Collections.Generic;
 using System.Linq.Expressions;
 
 namespace Raven.Migrations
@@ -87,6 +88,45 @@ namespace Raven.Migrations
             }
 
             return operation;
+        }
+
+
+
+        /// <summary>
+        /// Lazily streams in an entire collection of items.
+        /// WARNING: Avoid calling .ToList or otherwise causing the whole collection to be in memory, as loading large collections into memory can crash your process.
+        /// </summary>
+        /// <typeparam name="T">The type of items to return.</typeparam>
+        /// <returns>A sequence of all the items in the collection. Avoid calling .ToList() or otherwise causing the whole collection to load in memory.</returns>
+        protected IEnumerable<T> Stream<T>()
+        {
+            return Stream<T>(i => true);
+        }
+
+        /// <summary>
+        /// Lazily streams in a collection and returning the items that match the predicate. 
+        /// WARNING: Avoid calling .ToList or otherwise causing the whole collection to be in memory, as loading large collections into memory can crash your process.
+        /// </summary>
+        /// <typeparam name="T">The type of items to return.</typeparam>
+        /// <param name="predicate">The predicate used to filter the items from the collection. Only items that match the specified predicate will be returned.</param>
+        /// <returns>A lazy <see cref="IEnumerable{T}"/> of items in the collection that match the predicate.</returns>
+        protected IEnumerable<T> Stream<T>(Func<T, bool> predicate)
+        {
+            using (var dbSession = DocumentStore.OpenSession())
+            {
+                var collectionName = dbSession.Advanced.DocumentStore.Conventions.GetCollectionName(typeof(T));
+                var separator = dbSession.Advanced.DocumentStore.Conventions.IdentityPartsSeparator;
+                using (var enumerator = dbSession.Advanced.Stream<T>(collectionName + separator))
+                {
+                    while (enumerator.MoveNext())
+                    {
+                        if (predicate(enumerator.Current.Document))
+                        {
+                            yield return enumerator.Current.Document;
+                        }
+                    }
+                }
+            }
         }
     }
 }
