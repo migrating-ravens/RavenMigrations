@@ -67,7 +67,6 @@ namespace Raven.Migrations
             {
                 // No assemblies configured? Use the assembly that called .AddRavenDbMigrations.
                 options.Assemblies.Add(callingAssembly);
-                options.Assemblies.Add(Assembly.GetEntryAssembly());
             }
 
             var docStore = store ?? provider.GetRequiredService<IDocumentStore>();

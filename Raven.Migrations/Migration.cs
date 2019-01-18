@@ -12,9 +12,6 @@ namespace Raven.Migrations
     /// </summary>
     public abstract class Migration
     {
-        [Obsolete("use DocumentStore instead")]
-        protected IDocumentStore Db => DocumentStore;
-
         protected IDocumentStore DocumentStore { get; private set; }
         protected string Database { get; private set; }
         protected ILogger Logger { get; private set; }

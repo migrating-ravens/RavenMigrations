@@ -11,7 +11,7 @@ namespace Raven.Migrations.Sample.Migrations
     {
         public override void Up()
         {
-            using (var session = this.Db.OpenSession())
+            using (var session = this.DocumentStore.OpenSession())
             {
                 session.Advanced.WaitForIndexesAfterSaveChanges(TimeSpan.FromSeconds(10));
                 session.Store(new Shipper
