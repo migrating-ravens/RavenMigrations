@@ -49,7 +49,6 @@ namespace Raven.Migrations
         }
 
         public static readonly Func<Type, bool> TypeIsMigration = t => typeof(Migration).IsAssignableFrom(t)
-                                                                       && !t.IsAbstract
-                                                                       && t.GetConstructor(Type.EmptyTypes) != null;
+                                                                       && !t.IsAbstract;
     }
 }

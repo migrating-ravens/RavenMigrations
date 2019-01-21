@@ -102,6 +102,12 @@ namespace Raven.Migrations
         /// <returns></returns>
         private static IEnumerable<MigrationWithAttribute> FindAllMigrationsWithOptions(MigrationOptions options)
         {
+
+            var zanz = (from assembly in options.Assemblies
+                        from t in assembly.GetLoadableTypes()
+                        where options.Conventions.TypeIsMigration(t)
+                        select t).ToList();
+
             var migrationsToRun = 
                 from assembly in options.Assemblies
                 from t in assembly.GetLoadableTypes()
