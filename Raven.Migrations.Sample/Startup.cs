@@ -37,7 +37,7 @@ namespace Raven.Migrations.Sample
             var docStore = new DocumentStore
             {
                 Database = "Demo",
-                Urls = new[] { "http://localhost:8080" }
+                Urls = new[] { "http://live-test.ravendb.net" }
             };
             docStore.Initialize();
             services.AddSingleton<IDocumentStore>(docStore);
