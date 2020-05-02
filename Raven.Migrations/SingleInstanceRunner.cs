@@ -18,7 +18,7 @@ namespace Raven.Migrations
             _logger = logger;
         }
 
-        public new void Run()
+        public override void Run()
         {
             long? lockAcquired = null;
             using var session = _store.OpenSession();
