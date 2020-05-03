@@ -4,6 +4,10 @@ changes. This project adheres to [Semantic Versioning](http://semver.org).
 
 ## [x.x.x]
 
+## [4.2.0]
+- Added `SingleInstanceRunner` that allows execution of one migration process currently per database.
+- Allow `MigrationRunner` behaviour to be overriden by sub classes e.g. that's how `SingleInstanceRunner` works
+
 ## [2.1.0]
 - Added - Option to configure a `RavenMigration.ILogger` or use the `ConsoleLogger`.
 
