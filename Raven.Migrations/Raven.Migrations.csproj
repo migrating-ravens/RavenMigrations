@@ -23,6 +23,7 @@
     <LangVersion>8</LangVersion>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageIcon>logo-for-nuget.png</PackageIcon>
+    <RepositoryUrl>https://github.com/migrating-ravens/RavenMigrations/</RepositoryUrl>
 
   </PropertyGroup>
 
