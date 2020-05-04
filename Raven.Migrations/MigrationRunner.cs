@@ -56,49 +56,6 @@ namespace Raven.Migrations
             }
         }
 
-        private void DeleteExclusiveMigrationLock()
-        {
-            var getExistingLockResult = this.store.Operations.Send(new GetCompareExchangeValueOperation<DateTime>(migrationLockKey));
-            var hasExistingLock = getExistingLockResult != null;
-            if (hasExistingLock)
-            {
-                var deleteLockResult = this.store.Operations.Send(new DeleteCompareExchangeValueOperation<DateTime>(migrationLockKey, getExistingLockResult.Index));
-                if (!deleteLockResult.Successful)
-                {
-                    logger.LogWarning("Unable to delete existing migrations lock using {deleteLockResult} and {getExistingLockResult}", deleteLockResult, getExistingLockResult);
-                }
-            }
-        }
-
-        private bool SetExclusiveMigrationLock()
-        {
-            // Set a cluster-wide compare exchange value to signal we're running migrations.
-            // If it already exists, then another migration is running and we need to bail.
-            var lockExpirationDate = DateTime.UtcNow.Add(this.options.SimultaneousMigrationTimeout);
-            var lockResult = SetCompareExchangeLock(lockExpirationDate, 0);
-            if (lockResult.Successful)
-            {
-                return true;
-            }
-
-            // There's already a lock document. See if it's expired.
-            var getExistingLockResult = this.store.Operations.Send(new GetCompareExchangeValueOperation<DateTime>(migrationLockKey));
-            var hasTimeoutPassed = getExistingLockResult != null && getExistingLockResult.Value < DateTime.UtcNow;
-            if (hasTimeoutPassed)
-            {
-                // Try to update it with a new timeout.
-                var updateResult = SetCompareExchangeLock(lockExpirationDate, getExistingLockResult.Index);
-                return updateResult.Successful;
-            }
-
-            return false;
-        }
-
-        private CompareExchangeResult<DateTime> SetCompareExchangeLock(DateTime lockExpiration, long lockIndex)
-        {
-            return this.store.Operations.Send(new PutCompareExchangeValueOperation<DateTime>(migrationLockKey, lockExpiration, lockIndex));
-        }
-
         private void RunMigrations()
         {
             var migrations = FindAllMigrationsWithOptions(options);
@@ -212,6 +169,49 @@ namespace Raven.Migrations
             return options.Profiles
                 .Intersect(migrationWithAttribute.Attribute.Profiles, StringComparer.OrdinalIgnoreCase)
                 .Any();
+        }
+
+        private void DeleteExclusiveMigrationLock()
+        {
+            var getExistingLockResult = this.store.Operations.Send(new GetCompareExchangeValueOperation<DateTime>(migrationLockKey));
+            var hasExistingLock = getExistingLockResult != null;
+            if (hasExistingLock)
+            {
+                var deleteLockResult = this.store.Operations.Send(new DeleteCompareExchangeValueOperation<DateTime>(migrationLockKey, getExistingLockResult.Index));
+                if (!deleteLockResult.Successful)
+                {
+                    logger.LogWarning("Unable to delete existing migrations lock using {deleteLockResult} and {getExistingLockResult}", deleteLockResult, getExistingLockResult);
+                }
+            }
+        }
+
+        private bool SetExclusiveMigrationLock()
+        {
+            // Set a cluster-wide compare exchange value to signal we're running migrations.
+            // If it already exists, then another migration is running and we need to bail.
+            var lockExpirationDate = DateTime.UtcNow.Add(this.options.SimultaneousMigrationTimeout);
+            var lockResult = SetCompareExchangeLock(lockExpirationDate, 0);
+            if (lockResult.Successful)
+            {
+                return true;
+            }
+
+            // There's already a lock document. See if it's expired.
+            var getExistingLockResult = this.store.Operations.Send(new GetCompareExchangeValueOperation<DateTime>(migrationLockKey));
+            var hasTimeoutPassed = getExistingLockResult != null && getExistingLockResult.Value < DateTime.UtcNow;
+            if (hasTimeoutPassed)
+            {
+                // Try to update it with a new timeout.
+                var updateResult = SetCompareExchangeLock(lockExpirationDate, getExistingLockResult.Index);
+                return updateResult.Successful;
+            }
+
+            return false;
+        }
+
+        private CompareExchangeResult<DateTime> SetCompareExchangeLock(DateTime lockExpiration, long lockIndex)
+        {
+            return this.store.Operations.Send(new PutCompareExchangeValueOperation<DateTime>(migrationLockKey, lockExpiration, lockIndex));
         }
     }
 }
