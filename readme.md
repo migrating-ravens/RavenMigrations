@@ -16,7 +16,7 @@ Raven Migrations is a migration framework for [RavenDB](http://ravendb.net) to h
 
 ## Philosophy
 
-We believe any changes to your domain should be visible in your code and reflected as such. Changing things "on the fly", can lead to issues, where as migrations can be tested and throughly vetted before being exposed into your production environment. With RavenDB testing migrations is super simple since RavenDB supports in memory databases (our test suite is in memory).
+We believe any changes to your domain should be visible in your code and reflected as such. Changing things "on the fly", can lead to issues, where as migrations can be tested and throughly vetted before being exposed into your production environment. 
 
 This is important, once a migration is in your production environment, **NEVER EVER** modify it in your code. Treat a migration like a historical record of changes.
 
@@ -92,7 +92,7 @@ Each important part of the migration is numbered:
 1. Every migration has to be decorated with the **MigrationAttribute**, and needs to be seeded it with a *long* value. For smaller teams, a simple integer will do (ex. the first patch has Migration(1), then the second patch has Migration(2), etc.) If you're working with a larger team, where patch numbers might collide, we recommend you seed it with a **DateTime** stamp of yyyyMMddHHmmss ex. 20131031083545. This helps keeps teams from guessing and conflicting on the next migration number.
 2. Every migration needs to implement from the base class of **Migration**. This gives you access to base functionality and the ability to implement **Up** and **Down**. It also gives you access to the Raven ``DocumentStore`` and an ``ILogger`` instance.
 3. **Up** is the method that occurs when a migration is executed. As you see above, we are adding a document.
-4. **Down** is the method that occurs when a migration is rolledback. This is not always possible, but if it is, then it most likely will be the reverse of **Up**.
+4. **Down** is the method that occurs when a migration is rolled back. This is not always possible, but if it is, then it most likely will be the reverse of **Up**.
 
 In every migration you have access to the document store, so you are able to do anything you need to your storage engine. This document store is the same as the one your application will use.
 
@@ -111,9 +111,26 @@ services.AddRavenDbMigrations(options =>
 });
 ```
 
-#### Single instance runner
+#### Preventing simultaneous migrations
 
-This specialized type of `MigrationRunner` makes sure no more than one migration can be executed per backing database at the time. It's relying on the `CompareExchange` feature of raven.
+By default, Raven Migrations sets a Raven compare/exchange value to prevent simultaneous migrations runs. An example: if you have 2 instances of your app running, and both try to run migrations. When Raven Migrations detects this, it will prevent the other instances from running migrations and log a warning.
+
+Raven Migrations accomplishes this using a [Raven compare/exchange value](https://ravendb.net/docs/article-page/4.2/csharp/client-api/operations/compare-exchange/overview) to ensure no more than a single migration is running. It will set a `raven-migrations-lock` compare/exchange value in your database during migration run; its value set to a timeout date.
+
+Be aware that if you abnormally terminate migrations -- for example, if you kill or your web host kills your app during migration -- migrations will not be run until either you delete the `raven-migrations-lock` compare/exchange value, or until its timeout passes. By default, the timeout is 1 hour.
+
+If you wish to allow multiple simultaneous migrations or change the migration timeout lock, you can do so using override:
+
+``` c#
+services.AddRavenDbMigrations(options =>
+{
+    // Allow simultaneous migrations - beware, here be dragons. Defautls to true.
+    options.PreventSimultaneousMigrations = false;
+
+    // Change how long the migrations lock can be held for. Defautls to 1 hour.
+   options.SimultaneousMigrationTimeout = TimeSpan.FromMinutes(5);
+});
+```
 
 ``` c#
 
@@ -245,30 +262,30 @@ public class PersonNameMigration : Migration
 We suggest you run the migrations at the start of your application to ensure that any new changes you have made apply to your application before you application starts. If you do not want to do it here, you can choose to do it out of band using a seperate application. If you're using ASP.NET Core, you can run them in your Startup.cs
 
 ``` c#
-    public void ConfigureServices(IServiceCollection services)
-    {
-        // Add the MigrationRunner singleton into the dependency injection container.
-        services.AddRavenDbMigrations();
+public void ConfigureServices(IServiceCollection services)
+{
+    // Add the MigrationRunner singleton into the dependency injection container.
+    services.AddRavenDbMigrations();
 
-        // ...
-   
-        // Get the migration runner and execute pending migrations.
-        var migrationRunner = services.BuildServiceProvider().GetRequiredService<MigrationRunner>();
-        migrationRunner.Run();
-    }
+    // ...
+
+    // Get the migration runner and execute pending migrations.
+    var migrationRunner = services.BuildServiceProvider().GetRequiredService<MigrationRunner>();
+    migrationRunner.Run();
+}
 ```
 
 Not using ASP.NET Core? You can create the runner manually:
 ``` c#
-    // Skip dependency injection and run the migrations.
+// Skip dependency injection and run the migrations.
 
-    // Create migration options, using all Migration objects found in the current assembly.
-    var options = new MigrationOptions();
-    options.Assemblies.Add(Assembly.GetExecutingAssembly());
+// Create migration options, using all Migration objects found in the current assembly.
+var options = new MigrationOptions();
+options.Assemblies.Add(Assembly.GetExecutingAssembly());
 
-    // Create a new migration runner. docStore is your RavenDB IDocumentStore. Logger is an ILogger<MigrationRunner>.
-    var migrationRunner = new MigrationRunner(docStore, options, logger);
-    migrationRunner.Run();
+// Create a new migration runner. docStore is your RavenDB IDocumentStore. Logger is an ILogger<MigrationRunner>.
+var migrationRunner = new MigrationRunner(docStore, options, logger);
+migrationRunner.Run();
 ```
 
 ### Solution Structure

@@ -17,9 +17,9 @@ namespace Raven.Migrations
         /// <param name="services">The dependency injection container.</param>
         /// <param name="singleInstance"> Makes sure no more than one migration can be executed per backing database at the time.</param>
         /// <returns>A <see cref="MigrationRunner"/> which can be used to run the pending migrations.</returns>
-        public static IServiceCollection AddRavenDbMigrations(this IServiceCollection services, bool singleInstance = false)
+        public static IServiceCollection AddRavenDbMigrations(this IServiceCollection services)
         {
-            return CreateMigrationRunner(services, null, null, Assembly.GetCallingAssembly(), singleInstance);
+            return CreateMigrationRunner(services, null, null, Assembly.GetCallingAssembly());
         }
 
         /// <summary>
@@ -29,9 +29,9 @@ namespace Raven.Migrations
         /// <param name="configuration">A function that configures the migration options.</param>
         /// <param name="singleInstance"> Makes sure no more than one migration can be executed per backing database at the time.</param>
         /// <returns>A <see cref="MigrationRunner"/> which can be used to run the pending migrations.</returns>
-        public static IServiceCollection AddRavenDbMigrations(this IServiceCollection services, Action<MigrationOptions> configuration, bool singleInstance = false)
+        public static IServiceCollection AddRavenDbMigrations(this IServiceCollection services, Action<MigrationOptions> configuration)
         {
-            return CreateMigrationRunner(services, configuration, null, Assembly.GetCallingAssembly(), singleInstance);
+            return CreateMigrationRunner(services, configuration, null, Assembly.GetCallingAssembly());
         }
 
         /// <summary>
@@ -42,9 +42,9 @@ namespace Raven.Migrations
         /// <param name="docStore">The <see cref="IDocumentStore"/> to run the migrations against. Can be null. If null, an <see cref="IDocumentStore"/> must be available in the DI container.</param>
         /// <param name="singleInstance"> Makes sure no more than one migration can be executed per backing database at the time.</param>
         /// <returns>A <see cref="MigrationRunner"/> which can be used to run the pending migrations.</returns>
-        public static IServiceCollection AddRavenDbMigrations(this IServiceCollection services, Action<MigrationOptions> configuration, IDocumentStore docStore, bool singleInstance)
+        public static IServiceCollection AddRavenDbMigrations(this IServiceCollection services, Action<MigrationOptions> configuration, IDocumentStore docStore)
         {
-            return CreateMigrationRunner(services, configuration, docStore, Assembly.GetCallingAssembly(), singleInstance);
+            return CreateMigrationRunner(services, configuration, docStore, Assembly.GetCallingAssembly());
         }
 
         private static IServiceCollection CreateMigrationRunner(
@@ -59,10 +59,10 @@ namespace Raven.Migrations
                 assembly = Assembly.GetEntryAssembly();
             }
 
-            return services.AddSingleton(provider => CreateMigrationRunnerFromProvider(provider, assembly, configuration, docStore, singleInstance));
+            return services.AddSingleton(provider => CreateMigrationRunnerFromProvider(provider, assembly, configuration, docStore));
         }
 
-        private static MigrationRunner CreateMigrationRunnerFromProvider(IServiceProvider provider, Assembly callingAssembly, Action<MigrationOptions> configuration = null, IDocumentStore store = null, bool singleInstance = false)
+        private static MigrationRunner CreateMigrationRunnerFromProvider(IServiceProvider provider, Assembly callingAssembly, Action<MigrationOptions> configuration = null, IDocumentStore store = null)
         {
             var migrationResolver = new DependencyInjectionMigrationResolver(provider);
             var options = new MigrationOptions(migrationResolver);
@@ -75,7 +75,7 @@ namespace Raven.Migrations
 
             var docStore = store ?? provider.GetRequiredService<IDocumentStore>();
             var logger = provider.GetRequiredService<ILogger<MigrationRunner>>();
-            return singleInstance ? new SingleInstanceRunner(docStore, options, logger) : new MigrationRunner(docStore, options, logger);
+            return new MigrationRunner(docStore, options, logger);
         }
     }
 }

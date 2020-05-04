@@ -1,4 +1,6 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -102,6 +104,29 @@ namespace Raven.Migrations.Tests
 
             loggerMock.Verify(l => l.LogInformation("Updated {0} documents", 2), Times.Exactly(2), "Informational message should indicate how many documents were updated.");
             loggerMock.Verify(l => l.LogInformation("Updated {0} documents", 1), Times.Once, "Informational message should indicate how many documents were updated.");
+        }
+
+        [Fact]
+        public async Task Calling_run_in_parallel_runs_migrations_only_once()
+        {
+            using var documentStore = GetDocumentStore();
+            await new TestDocumentIndex().ExecuteAsync(documentStore);
+
+            var instanceOne = new MigrationRunner(documentStore, new MigrationOptions(), new ConsoleLogger());
+            var instanceTwo = new MigrationRunner(documentStore, new MigrationOptions(), new ConsoleLogger());
+
+            var first = Task.Run(() => instanceOne.Run());
+            var second = Task.Run(() => instanceTwo.Run());
+
+            await Task.WhenAll(first, second);
+
+            WaitForIndexing(documentStore);
+            WaitForUserToContinueTheTest(documentStore);
+
+            using var session = documentStore.OpenSession();
+            session.Query<TestDocument, TestDocumentIndex>()
+                .Count()
+                .Should().Be(1);
         }
 
         private Person InitialiseWithPerson(IDocumentStore store, string firstName, string lastName)

@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using Microsoft.Extensions.Logging;
 using Raven.Client.Documents;
+using Raven.Client.Documents.Operations.CompareExchange;
 
 namespace Raven.Migrations
 {
@@ -16,6 +17,8 @@ namespace Raven.Migrations
         private readonly MigrationOptions options;
         private readonly ILogger<MigrationRunner> logger;
 
+        private const string migrationLockKey = "raven-migrations-lock";
+
         public MigrationRunner(IDocumentStore store, MigrationOptions options, ILogger<MigrationRunner> logger)
         {
             this.store = store ?? throw new ArgumentNullException(nameof(store));
@@ -27,6 +30,76 @@ namespace Raven.Migrations
         /// Runs the pending migrations.
         /// </summary>
         public virtual void Run()
+        {
+            var canRunMigrations = true;
+            if (this.options.PreventSimultaneousMigrations)
+            {
+                canRunMigrations = SetExclusiveMigrationLock();
+            }
+            if (!canRunMigrations)
+            {
+                logger.LogWarning("Skipping migrations because migrations are already running.");
+            }
+            else
+            {
+                try
+                {
+                    RunMigrations();
+                }
+                finally
+                {
+                    if (this.options.PreventSimultaneousMigrations)
+                    {
+                        DeleteExclusiveMigrationLock();
+                    }
+                }
+            }
+        }
+
+        private void DeleteExclusiveMigrationLock()
+        {
+            var getExistingLockResult = this.store.Operations.Send(new GetCompareExchangeValueOperation<DateTime>(migrationLockKey));
+            var hasExistingLock = getExistingLockResult != null;
+            if (hasExistingLock)
+            {
+                var deleteLockResult = this.store.Operations.Send(new DeleteCompareExchangeValueOperation<DateTime>(migrationLockKey, getExistingLockResult.Index));
+                if (!deleteLockResult.Successful)
+                {
+                    logger.LogWarning("Unable to delete existing migrations lock using {deleteLockResult} and {getExistingLockResult}", deleteLockResult, getExistingLockResult);
+                }
+            }
+        }
+
+        private bool SetExclusiveMigrationLock()
+        {
+            // Set a cluster-wide compare exchange value to signal we're running migrations.
+            // If it already exists, then another migration is running and we need to bail.
+            var lockExpirationDate = DateTime.UtcNow.Add(this.options.SimultaneousMigrationTimeout);
+            var lockResult = SetCompareExchangeLock(lockExpirationDate, 0);
+            if (lockResult.Successful)
+            {
+                return true;
+            }
+
+            // There's already a lock document. See if it's expired.
+            var getExistingLockResult = this.store.Operations.Send(new GetCompareExchangeValueOperation<DateTime>(migrationLockKey));
+            var hasTimeoutPassed = getExistingLockResult != null && getExistingLockResult.Value < DateTime.UtcNow;
+            if (hasTimeoutPassed)
+            {
+                // Try to update it with a new timeout.
+                var updateResult = SetCompareExchangeLock(lockExpirationDate, getExistingLockResult.Index);
+                return updateResult.Successful;
+            }
+
+            return false;
+        }
+
+        private CompareExchangeResult<DateTime> SetCompareExchangeLock(DateTime lockExpiration, long lockIndex)
+        {
+            return this.store.Operations.Send(new PutCompareExchangeValueOperation<DateTime>(migrationLockKey, lockExpiration, lockIndex));
+        }
+
+        private void RunMigrations()
         {
             var migrations = FindAllMigrationsWithOptions(options);
             var recordStore = options.MigrationRecordStore ?? new DefaultMigrationRecordStore(store, options);
@@ -102,12 +175,6 @@ namespace Raven.Migrations
         /// <returns></returns>
         private static IEnumerable<MigrationWithAttribute> FindAllMigrationsWithOptions(MigrationOptions options)
         {
-
-            var zanz = (from assembly in options.Assemblies
-                        from t in assembly.GetLoadableTypes()
-                        where options.Conventions.TypeIsMigration(t)
-                        select t).ToList();
-
             var migrationsToRun = 
                 from assembly in options.Assemblies
                 from t in assembly.GetLoadableTypes()

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Reflection;
 
 namespace Raven.Migrations
@@ -20,6 +21,8 @@ namespace Raven.Migrations
             ToVersion = 0;
             Conventions = new MigrationConventions();
             MigrationResolver = migrationResolver;
+            PreventSimultaneousMigrations = true;
+            SimultaneousMigrationTimeout = TimeSpan.FromHours(1);
         }
 
         public string Database { get; set; }
@@ -30,5 +33,18 @@ namespace Raven.Migrations
         public long ToVersion { get; set; }
         public MigrationConventions Conventions { get; set; }
         public IMigrationRecordStore MigrationRecordStore { get; set; }
+        
+        /// <summary>
+        /// Whether to prevent simultaenous migrations (e.g. from other web app instances) from running.
+        /// Defaults to true. 
+        /// If enabled, a Raven compare-exchange value will be set during migrations. The compare-exchange value will be deleted when migrations complete. 
+        /// Additional attempts to run migration will fail while this compare-exchange value exists.
+        /// </summary>
+        public bool PreventSimultaneousMigrations { get; set; }
+
+        /// <summary>
+        /// If <see cref="PreventSimultaneousMigrations"/> is enabled, any attempt to run migrations during this time will fail.
+        /// </summary>
+        public TimeSpan SimultaneousMigrationTimeout { get; set; }
     }
 }
