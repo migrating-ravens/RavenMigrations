@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Version>4.2.0</Version>
+    <Version>4.3.0</Version>
     <PackageId>RavenMigrations</PackageId>
     <Authors>Darrel Portzline, Khalid Abuhakmeh, Judah Gabriel Himango</Authors>
     <Company>BitShuva</Company>
@@ -12,7 +12,7 @@
     <Product>RavenDB.Migrations</Product>
     <PackageIconUrl>https://raw.githubusercontent.com/migrating-ravens/RavenMigrations/master/Raven.Migrations/logo-for-nuget.png</PackageIconUrl>
     <PackageProjectUrl>https://github.com/migrating-ravens/RavenMigrations</PackageProjectUrl>
-    <PackageLicenseUrl>https://github.com/migrating-ravens/RavenMigrations/blob/master/LICENSE.txt</PackageLicenseUrl>
+    <PackageLicenseUrl></PackageLicenseUrl>
     <PackageTags>ravendb, nosql, migration, schema</PackageTags>
     <PackageReleaseNotes>Fixed skipping migrations with non-default constructors.</PackageReleaseNotes>
 
@@ -21,6 +21,7 @@
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
     <LangVersion>8</LangVersion>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
 
   </PropertyGroup>
 
