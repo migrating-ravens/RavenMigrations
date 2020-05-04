@@ -14,7 +14,7 @@
     <PackageProjectUrl>https://github.com/migrating-ravens/RavenMigrations</PackageProjectUrl>
     <PackageLicenseUrl></PackageLicenseUrl>
     <PackageTags>ravendb, nosql, migration, schema</PackageTags>
-    <PackageReleaseNotes>Fixed skipping migrations with non-default constructors.</PackageReleaseNotes>
+    <PackageReleaseNotes>Preventing simultaneous migrations by default using Raven compare/exchange.</PackageReleaseNotes>
 
     <!-- SourceLink support -->
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
