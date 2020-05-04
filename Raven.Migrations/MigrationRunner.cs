@@ -26,7 +26,7 @@ namespace Raven.Migrations
         /// <summary>
         /// Runs the pending migrations.
         /// </summary>
-        public void Run()
+        public virtual void Run()
         {
             var migrations = FindAllMigrationsWithOptions(options);
             var recordStore = options.MigrationRecordStore ?? new DefaultMigrationRecordStore(store, options);

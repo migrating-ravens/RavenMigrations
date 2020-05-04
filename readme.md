@@ -28,7 +28,7 @@ Every migration has several elements you need to be aware of. Additionally, ther
 
 A migration looks like the following:
 
-```csharp
+``` c#
 // #1 - specify the migration number
 [Migration(1)]                 
 public class PeopleHaveFullNames : Migration // #2 inherit from Migration
@@ -58,7 +58,7 @@ public class PeopleHaveFullNames : Migration // #2 inherit from Migration
 
 To run the migrations, here's how it'd look in an ASP.NET Core app.
 
-```csharp
+``` c#
 // In Startup.cs
 public void ConfigureServices(IServiceCollection services)
 {
@@ -75,7 +75,7 @@ public void Configure(IApplicationBuilder app, ...)
 ```
 
 Not using ASP.NET Core? You can create the runner manually:
-```csharp
+``` c#
 // Skip dependency injection and run the migrations.
 
 // Create migration options, using all Migration objects found in the current assembly.
@@ -104,18 +104,36 @@ After each migration is executed, a document of type **MigrationDocument** is in
 
 You can modify the runner options by passing an action to the .AddRavenDbMigrations call:
 
-```csharp
+``` c#
 services.AddRavenDbMigrations(options =>
 {
    // Configure the migration options here
 });
 ```
 
+#### Single instance runner
+
+This specialized type of `MigrationRunner` makes sure no more than one migration can be executed per backing database at the time. It's relying on the `CompareExchange` feature of raven.
+
+``` c#
+
+// In Startup.cs
+public void ConfigureServices(IServiceCollection services)
+{
+    // pass the option single instance, the rest stays as is.
+    services.AddRavenDbMigrations(singleInstance: true);
+}
+
+... 
+
+```
+
+
 ### Profiles
 
 We understand there are times when you want to run specific migrations in certain environments, so Raven Migrations supports profiles. For instance, some migrations might only run during development, by decorating your migration with the profile of *"development"* and setting the options to include the profile will execute that migration.
 
-```csharp
+``` c#
 [Migration(3, "development")]
 public class Development_Migration : Migration
 {
@@ -137,9 +155,9 @@ services.AddRavenDbMigrations(options => options.Profiles = new[] { "development
 
 You can also specify that a particular profile belongs in more than one profile by setting multiple profile names in the attribute.
 
-``
+``` c#
 [Migration(3, "development", "demo")]
-``
+```
 
 This migration would run if either (or both) the development and demo profiles were specified in the MigrationOptions.
 
@@ -149,7 +167,7 @@ Inside each of your Migration instances, you should use RavenDB's <a href="https
 #### Migration.PatchCollection
 ```Migration.PatchCollection``` is a helper method that <a href="https://ravendb.net/docs/article-page/4.0/csharp/client-api/operations/patching/set-based">patches a collection via RQL</a>.
 
-```csharp
+``` c#
 public override void Up()
 {
    this.PatchCollection("from People update { p.Foo = 'Hello world!' }");
@@ -157,7 +175,7 @@ public override void Up()
 ```
 
 #### Migrations using dependency injection services
-```csharp
+``` c#
 [Migration(1)]
 public class MyMigrationUsingServices : Migration
 {
@@ -179,7 +197,7 @@ public class MyMigrationUsingServices : Migration
 #### Example: Adding and deleting properties
 Let's say you start using a single Name property:
 
-```csharp
+``` c#
 public class Person
 {
     public string Id { get; set; }
@@ -187,7 +205,7 @@ public class Person
 }
 ```
 But then want to change using two properties, FirstName and LastName:
-```csharp
+``` c#
 public class Person
 {
     public string Id { get; set; }
@@ -197,7 +215,7 @@ public class Person
 ```
 You now need to migrate your documents or you will lose data when you load your new ```Person```.  The following migration uses RQL to split out the first and last names:
 
-```csharp
+``` c#
 [Migration(1)]
 public class PersonNameMigration : Migration
 {
@@ -226,7 +244,7 @@ public class PersonNameMigration : Migration
 
 We suggest you run the migrations at the start of your application to ensure that any new changes you have made apply to your application before you application starts. If you do not want to do it here, you can choose to do it out of band using a seperate application. If you're using ASP.NET Core, you can run them in your Startup.cs
 
-```csharp
+``` c#
     public void ConfigureServices(IServiceCollection services)
     {
         // Add the MigrationRunner singleton into the dependency injection container.
@@ -241,7 +259,7 @@ We suggest you run the migrations at the start of your application to ensure tha
 ```
 
 Not using ASP.NET Core? You can create the runner manually:
-```csharp
+``` c#
     // Skip dependency injection and run the migrations.
 
     // Create migration options, using all Migration objects found in the current assembly.

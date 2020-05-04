@@ -329,7 +329,7 @@ namespace Raven.Migrations.Tests
     {
         public override void Up()
         {
-            using (var session = Db.OpenSession())
+            using (var session = DocumentStore.OpenSession())
             {
                 session.Store(new TestDocument { Id = "TestDocuments/1", Name = "Yehuda Gavriel" });
                 session.SaveChanges();
@@ -338,7 +338,7 @@ namespace Raven.Migrations.Tests
 
         public override void Down()
         {
-            using (var session = Db.OpenSession())
+            using (var session = DocumentStore.OpenSession())
             {
                 session.Delete("TestDocuments/1");
                 session.SaveChanges();
@@ -351,7 +351,7 @@ namespace Raven.Migrations.Tests
     {
         public override void Up()
         {
-            using (var session = Db.OpenSession())
+            using (var session = DocumentStore.OpenSession())
             {
                 session.Store(new { Id = "second-document", Name = "woot!" });
                 session.SaveChanges();
@@ -360,7 +360,7 @@ namespace Raven.Migrations.Tests
 
         public override void Down()
         {
-            using (var session = Db.OpenSession())
+            using (var session = DocumentStore.OpenSession())
             {
                 var doc = session.Load<object>("second-document");
                 session.Delete(doc);
@@ -374,7 +374,7 @@ namespace Raven.Migrations.Tests
     {
         public override void Up()
         {
-            using (var session = Db.OpenSession())
+            using (var session = DocumentStore.OpenSession())
             {
                 session.Store(new { Id = "development-1" });
                 session.SaveChanges();
@@ -387,7 +387,7 @@ namespace Raven.Migrations.Tests
     {
         public override void Up()
         {
-            using (var session = Db.OpenSession())
+            using (var session = DocumentStore.OpenSession())
             {
                 session.Store(new { Id = "migrated-using-BaseMigration" });
                 session.SaveChanges();
