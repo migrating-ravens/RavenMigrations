@@ -109,7 +109,7 @@ namespace Raven.Migrations
         /// <returns>A lazy <see cref="IEnumerable{T}"/> of items in the collection that match the predicate.</returns>
         protected IEnumerable<T> Stream<T>(Func<T, bool> predicate)
         {
-            using (var dbSession = DocumentStore.OpenSession())
+            using (var dbSession = DocumentStore.OpenSession(Database))
             {
                 var collectionName = dbSession.Advanced.DocumentStore.Conventions.GetCollectionName(typeof(T));
                 var separator = dbSession.Advanced.DocumentStore.Conventions.IdentityPartsSeparator;
