@@ -49,10 +49,9 @@ namespace Raven.Migrations
 
         private static IServiceCollection CreateMigrationRunner(
             IServiceCollection services, 
-            Action<MigrationOptions> configuration, 
-            IDocumentStore docStore, 
-            Assembly assembly,
-            bool singleInstance = false)
+            Action<MigrationOptions>? configuration, 
+            IDocumentStore? docStore, 
+            Assembly assembly)
         {
             if (assembly == null)
             {
@@ -62,7 +61,7 @@ namespace Raven.Migrations
             return services.AddSingleton(provider => CreateMigrationRunnerFromProvider(provider, assembly, configuration, docStore));
         }
 
-        private static MigrationRunner CreateMigrationRunnerFromProvider(IServiceProvider provider, Assembly callingAssembly, Action<MigrationOptions> configuration = null, IDocumentStore store = null)
+        private static MigrationRunner CreateMigrationRunnerFromProvider(IServiceProvider provider, Assembly callingAssembly, Action<MigrationOptions>? configuration = null, IDocumentStore? store = null)
         {
             var migrationResolver = new DependencyInjectionMigrationResolver(provider);
             var options = new MigrationOptions(migrationResolver);

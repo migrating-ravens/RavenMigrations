@@ -4,7 +4,7 @@ namespace Raven.Migrations
 {
     internal class MigrationWithAttribute
     {
-        public Func<Migration> Migration { get; set; }
-        public MigrationAttribute Attribute { get; set; }
+        public Func<Migration>? Migration { get; set; }
+        public MigrationAttribute? Attribute { get; set; }
     }
 }

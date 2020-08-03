@@ -78,9 +78,9 @@ namespace Raven.Migrations
             var sw = Stopwatch.StartNew();
             foreach (var pair in migrations)
             {
-                var migration = pair.Migration();
+                var migration = pair.Migration!();
                 migration.Setup(store, options, logger);
-                var migrationId = options.Conventions.MigrationDocumentId(migration, store.Conventions.IdentityPartsSeparator[0]);
+                var migrationId = options.Conventions.MigrationDocumentId(migration, store.Conventions.IdentityPartsSeparator);
                 var migrationDoc = recordStore.Load(migrationId);
 
                 switch (options.Direction)
@@ -92,7 +92,7 @@ namespace Raven.Migrations
                             continue;
                         }
 
-                        ExecuteMigration(options.Direction, pair.Attribute.Version, migration, () => {
+                        ExecuteMigration(options.Direction, pair.Attribute!.Version, migration, () => {
                             migration.Down();
                             recordStore.Delete(migrationDoc);
                         });
@@ -106,7 +106,7 @@ namespace Raven.Migrations
                             continue;
                         }
 
-                        ExecuteMigration(options.Direction, pair.Attribute.Version, migration, () => {
+                        ExecuteMigration(options.Direction, pair.Attribute!.Version, migration, () => {
                             migration.Up();
                             recordStore.Store(migrationId);
                         });
@@ -146,8 +146,8 @@ namespace Raven.Migrations
 
             // if we are going down, we want to run it in reverse
             return options.Direction == Directions.Down 
-                ? migrationsToRun.OrderByDescending(x => x.Attribute.Version) 
-                : migrationsToRun.OrderBy(x => x.Attribute.Version);
+                ? migrationsToRun.OrderByDescending(x => x.Attribute!.Version) 
+                : migrationsToRun.OrderBy(x => x.Attribute!.Version);
         }
 
         private static bool IsInCurrentMigrationProfile(MigrationWithAttribute migrationWithAttribute, MigrationOptions options)
@@ -174,8 +174,7 @@ namespace Raven.Migrations
         private void DeleteExclusiveMigrationLock()
         {
             var getExistingLockResult = this.store.Operations.Send(new GetCompareExchangeValueOperation<DateTime>(migrationLockKey));
-            var hasExistingLock = getExistingLockResult != null;
-            if (hasExistingLock)
+            if (getExistingLockResult != null)
             {
                 var deleteLockResult = this.store.Operations.Send(new DeleteCompareExchangeValueOperation<DateTime>(migrationLockKey, getExistingLockResult.Index));
                 if (!deleteLockResult.Successful)
@@ -202,7 +201,7 @@ namespace Raven.Migrations
             if (hasTimeoutPassed)
             {
                 // Try to update it with a new timeout.
-                var updateResult = SetCompareExchangeLock(lockExpirationDate, getExistingLockResult.Index);
+                var updateResult = SetCompareExchangeLock(lockExpirationDate, getExistingLockResult!.Index);
                 return updateResult.Successful;
             }
 

@@ -72,235 +72,181 @@ namespace Raven.Migrations.Tests
         [Fact]
         public void Can_run_an_up_migration_against_a_document_store()
         {
-            using (var store = GetDocumentStore())
-            {
-                new TestDocumentIndex().Execute(store);
+            using var store = GetDocumentStore();
+            new TestDocumentIndex().Execute(store);
 
-                var runner = new MigrationRunner(store, GetMigrationOptions(), new ConsoleLogger());
-                runner.Run();
-                WaitForIndexing(store);
+            var runner = new MigrationRunner(store, GetMigrationOptions(), new ConsoleLogger());
+            runner.Run();
+            WaitForIndexing(store);
 
-                using (var session = store.OpenSession())
-                {
-                    session.Query<TestDocument, TestDocumentIndex>()
-                        .Count()
-                        .Should().Be(1);
-                }
-            }
+            using var session = store.OpenSession();
+            session.Query<TestDocument, TestDocumentIndex>()
+                .Count()
+                .Should().Be(1);
         }
 
         [Fact]
         public void Calling_run_twice_runs_migrations_only_once()
         {
-            using (var store = GetDocumentStore())
-            {
-                new TestDocumentIndex().Execute(store);
+            using var store = GetDocumentStore();
+            new TestDocumentIndex().Execute(store);
 
-                var runner = new MigrationRunner(store, GetMigrationOptions(), new ConsoleLogger());
-                runner.Run();
+            var runner = new MigrationRunner(store, GetMigrationOptions(), new ConsoleLogger());
+            runner.Run();
 
-                // oooops, twice!
-                runner.Run();
+            // oooops, twice!
+            runner.Run();
 
-                WaitForIndexing(store);
+            WaitForIndexing(store);
 
-                using (var session = store.OpenSession())
-                {
-                    session.Query<TestDocument, TestDocumentIndex>()
-                        .Count()
-                        .Should().Be(1);
-                }
-            }
+            using var session = store.OpenSession();
+            session.Query<TestDocument, TestDocumentIndex>()
+                .Count()
+                .Should().Be(1);
         }
 
         [Fact]
         public void Can_call_up_then_down_on_migrations()
         {
-            using (var store = GetDocumentStore())
-            {
-                new TestDocumentIndex().Execute(store);
+            using var store = GetDocumentStore();
+            new TestDocumentIndex().Execute(store);
 
-                var runner = new MigrationRunner(store, GetMigrationOptions(), new ConsoleLogger());
-                runner.Run();
+            var runner = new MigrationRunner(store, GetMigrationOptions(), new ConsoleLogger());
+            runner.Run();
 
-                WaitForIndexing(store);
+            WaitForIndexing(store);
 
-                // flip it and reverse it :P
-                var options = GetMigrationOptions();
-                options.Direction = Directions.Down;
-                var reverseRunner = new MigrationRunner(store, options, new ConsoleLogger());
-                reverseRunner.Run();
-                
-                WaitForIndexing(store);
-                using (var session = store.OpenSession())
-                {
-                    session.Query<TestDocument, TestDocumentIndex>()
-                        .Count()
-                        .Should().Be(0);
-                }
-            }
+            // flip it and reverse it :P
+            var options = GetMigrationOptions();
+            options.Direction = Directions.Down;
+            var reverseRunner = new MigrationRunner(store, options, new ConsoleLogger());
+            reverseRunner.Run();
+
+            WaitForIndexing(store);
+            using var session = store.OpenSession();
+            session.Query<TestDocument, TestDocumentIndex>()
+                .Count()
+                .Should().Be(0);
         }
 
         [Fact]
         public void Can_call_migrations_up_to_a_certain_version()
         {
-            using (var store = GetDocumentStore())
-            {
-                new TestDocumentIndex().Execute(store);
+            using var store = GetDocumentStore();
+            new TestDocumentIndex().Execute(store);
 
-                var options = GetMigrationOptions();
-                options.ToVersion = 1;
-                var runner = new MigrationRunner(store, options, new ConsoleLogger());
-                runner.Run();
-                WaitForIndexing(store);
+            var options = GetMigrationOptions();
+            options.ToVersion = 1;
+            var runner = new MigrationRunner(store, options, new ConsoleLogger());
+            runner.Run();
+            WaitForIndexing(store);
 
-                using (var session = store.OpenSession())
-                {
-                    session.Query<TestDocument, TestDocumentIndex>()
-                        .Count()
-                        .Should().Be(1);
+            using var session = store.OpenSession();
+            session.Query<TestDocument, TestDocumentIndex>()
+                .Count()
+                .Should().Be(1);
 
-                    var shouldNotExist = session.Load<object>("second-document");
-                    shouldNotExist.Should().BeNull();
-                }
-            }
+            var shouldNotExist = session.Load<object>("second-document");
+            shouldNotExist.Should().BeNull();
         }
 
         [Fact]
         public void Can_call_migrations_down_to_a_certain_version()
         {
-            using (var store = GetDocumentStore())
-            {
-                new TestDocumentIndex().Execute(store);
+            using var store = GetDocumentStore();
+            new TestDocumentIndex().Execute(store);
 
-                var runner = new MigrationRunner(store, GetMigrationOptions(), new ConsoleLogger());
-                runner.Run();
-                WaitForIndexing(store);
+            var runner = new MigrationRunner(store, GetMigrationOptions(), new ConsoleLogger());
+            runner.Run();
+            WaitForIndexing(store);
 
-                // migrate down to 
-                var options = GetMigrationOptions();
-                options.Direction = Directions.Down;
-                options.ToVersion = 2;
-                var downRunner = new MigrationRunner(store, options, new ConsoleLogger());
-                downRunner.Run();
+            // migrate down to 
+            var options = GetMigrationOptions();
+            options.Direction = Directions.Down;
+            options.ToVersion = 2;
+            var downRunner = new MigrationRunner(store, options, new ConsoleLogger());
+            downRunner.Run();
 
-                using (var session = store.OpenSession())
-                {
-                    session.Query<TestDocument, TestDocumentIndex>()
-                        .Count()
-                        .Should().Be(1);
+            using var session = store.OpenSession();
+            session.Query<TestDocument, TestDocumentIndex>()
+                .Count()
+                .Should().Be(1);
 
-                    var secondId = options.Conventions.MigrationDocumentId(new Second_Migration(), '/');
-                    var secondMigrationDocument = session.Load<MigrationRecord>(secondId);
-                    secondMigrationDocument.Should().BeNull();
+            var secondId = options.Conventions.MigrationDocumentId(new Second_Migration(), '/');
+            var secondMigrationDocument = session.Load<MigrationRecord>(secondId);
+            secondMigrationDocument.Should().BeNull();
 
-                    var id = options.Conventions.MigrationDocumentId(new First_Migration(), '/');
-                    var firstMigrationDocument = session.Load<MigrationRecord>(id);
-                    firstMigrationDocument.Should().NotBeNull();
-                }
-            }
+            var id = options.Conventions.MigrationDocumentId(new First_Migration(), '/');
+            var firstMigrationDocument = session.Load<MigrationRecord>(id);
+            firstMigrationDocument.Should().NotBeNull();
         }
 
         [Fact]
         public void Can_call_migrations_with_development_profile()
         {
-            using (var store = GetDocumentStore())
-            {
-                new TestDocumentIndex().Execute(store);
+            using var store = GetDocumentStore();
+            new TestDocumentIndex().Execute(store);
 
-                var options = GetMigrationOptions();
-                options.Profiles = new[] { "development" };
-                var runner = new MigrationRunner(store, options, new ConsoleLogger());
-                runner.Run();
-                WaitForIndexing(store);
+            var options = GetMigrationOptions();
+            options.Profiles = new[] { "development" };
+            var runner = new MigrationRunner(store, options, new ConsoleLogger());
+            runner.Run();
+            WaitForIndexing(store);
 
-                using (var session = store.OpenSession())
-                {
-                    var development = session.Load<object>("development-1");
-                    development.Should().NotBeNull();
-                }
-            }
+            using var session = store.OpenSession();
+            var development = session.Load<object>("development-1");
+            development.Should().NotBeNull();
         }
 
         [Fact]
         public void Can_call_migrations_with_demo_profile()
         {
-            using (var store = GetDocumentStore())
-            {
-                new TestDocumentIndex().Execute(store);
+            using var store = GetDocumentStore();
+            new TestDocumentIndex().Execute(store);
 
-                var options = GetMigrationOptions();
-                options.Profiles = new[] { "demo" };
-                var runner = new MigrationRunner(store, options, new ConsoleLogger());
-                runner.Run();
-                WaitForIndexing(store);
+            var options = GetMigrationOptions();
+            options.Profiles = new[] { "demo" };
+            var runner = new MigrationRunner(store, options, new ConsoleLogger());
+            runner.Run();
+            WaitForIndexing(store);
 
-                using (var session = store.OpenSession())
-                {
-                    var development = session.Load<object>("development-1");
-                    development.Should().NotBeNull();
-                }
-            }
+            using var session = store.OpenSession();
+            var development = session.Load<object>("development-1");
+            development.Should().NotBeNull();
         }
 
         [Fact]
         public void Can_call_migrations_ignore_migrations_with_profile()
         {
-            using (var store = GetDocumentStore())
-            {
-                new TestDocumentIndex().Execute(store);
+            using var store = GetDocumentStore();
+            new TestDocumentIndex().Execute(store);
 
-                var runner = new MigrationRunner(store, GetMigrationOptions(), new ConsoleLogger());
-                runner.Run();
-                WaitForIndexing(store);
+            var runner = new MigrationRunner(store, GetMigrationOptions(), new ConsoleLogger());
+            runner.Run();
+            WaitForIndexing(store);
 
-                using (var session = store.OpenSession())
-                {
-                    var development = session.Load<object>("development-1");
-                    development.Should().BeNull();
-                }
-            }
+            using var session = store.OpenSession();
+            var development = session.Load<object>("development-1");
+            development.Should().BeNull();
         }
 
         [Fact]
         public void Can_call_migrations_that_are_not_direct_subclasses_of_Migration()
         {
-            using (var store = GetDocumentStore())
-            {
-                new TestDocumentIndex().Execute(store);
+            using var store = GetDocumentStore();
+            new TestDocumentIndex().Execute(store);
 
-                var options = GetMigrationOptions();
-                options.Profiles = new[] { "uses-BaseMigration" };
-                var runner = new MigrationRunner(store, options, new ConsoleLogger());
-                runner.Run();
-                WaitForIndexing(store);
+            var options = GetMigrationOptions();
+            options.Profiles = new[] { "uses-BaseMigration" };
+            var runner = new MigrationRunner(store, options, new ConsoleLogger());
+            runner.Run();
+            WaitForIndexing(store);
 
-                using (var session = store.OpenSession())
-                {
-                    var development = session.Load<object>("migrated-using-BaseMigration");
-                    development.Should().NotBeNull();
-                }
-            }
+            using var session = store.OpenSession();
+            var development = session.Load<object>("migrated-using-BaseMigration");
+            development.Should().NotBeNull();
         }
         
-        [Fact(Skip = "not implemented at the moment")]
-        public void Can_call_migrations_with_custom_attributes()
-        {
-            using (var store = GetDocumentStore())
-            {
-                new TestDocumentIndex().Execute(store);
-
-                var runner = new MigrationRunner(store, GetMigrationOptions(), new ConsoleLogger());
-                WaitForIndexing(store);
-
-                using (var session = store.OpenSession())
-                {
-                    var customMigration = session.Load<object>("migrated-using-custom-migration-attribute");
-                    customMigration.Should().NotBeNull();
-                }
-            }
-        }
-
         private MigrationOptions GetMigrationOptions()
         {
             var options = new MigrationOptions();
@@ -329,20 +275,16 @@ namespace Raven.Migrations.Tests
     {
         public override void Up()
         {
-            using (var session = DocumentStore.OpenSession())
-            {
-                session.Store(new TestDocument { Id = "TestDocuments/1", Name = "Yehuda Gavriel" });
-                session.SaveChanges();
-            }
+            using var session = DocumentStore.OpenSession();
+            session.Store(new TestDocument { Id = "TestDocuments/1", Name = "Yehuda Gavriel" });
+            session.SaveChanges();
         }
 
         public override void Down()
         {
-            using (var session = DocumentStore.OpenSession())
-            {
-                session.Delete("TestDocuments/1");
-                session.SaveChanges();
-            }
+            using var session = DocumentStore.OpenSession();
+            session.Delete("TestDocuments/1");
+            session.SaveChanges();
         }
     }
 
@@ -351,21 +293,17 @@ namespace Raven.Migrations.Tests
     {
         public override void Up()
         {
-            using (var session = DocumentStore.OpenSession())
-            {
-                session.Store(new { Id = "second-document", Name = "woot!" });
-                session.SaveChanges();
-            }
+            using var session = DocumentStore.OpenSession();
+            session.Store(new { Id = "second-document", Name = "woot!" });
+            session.SaveChanges();
         }
 
         public override void Down()
         {
-            using (var session = DocumentStore.OpenSession())
-            {
-                var doc = session.Load<object>("second-document");
-                session.Delete(doc);
-                session.SaveChanges();
-            }
+            using var session = DocumentStore.OpenSession();
+            var doc = session.Load<object>("second-document");
+            session.Delete(doc);
+            session.SaveChanges();
         }
     }
 
@@ -374,11 +312,9 @@ namespace Raven.Migrations.Tests
     {
         public override void Up()
         {
-            using (var session = DocumentStore.OpenSession())
-            {
-                session.Store(new { Id = "development-1" });
-                session.SaveChanges();
-            }
+            using var session = DocumentStore.OpenSession();
+            session.Store(new { Id = "development-1" });
+            session.SaveChanges();
         }
     }
 
@@ -387,11 +323,9 @@ namespace Raven.Migrations.Tests
     {
         public override void Up()
         {
-            using (var session = DocumentStore.OpenSession())
-            {
-                session.Store(new { Id = "migrated-using-BaseMigration" });
-                session.SaveChanges();
-            }
+            using var session = DocumentStore.OpenSession();
+            session.Store(new { Id = "migrated-using-BaseMigration" });
+            session.SaveChanges();
         }
     }    
 

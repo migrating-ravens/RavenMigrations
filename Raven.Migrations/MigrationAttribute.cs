@@ -8,7 +8,7 @@ namespace Raven.Migrations
     public class MigrationAttribute : Attribute
     {
         public MigrationAttribute(long version)
-            : this(version, null)
+            : this(version, new string[] { })
         {
             
         }
@@ -20,7 +20,7 @@ namespace Raven.Migrations
         }
 
         public long Version { get; set; }
-        public IEnumerable<string> Profiles { get; set; }
-        public string Description { get; set; }
+        public IEnumerable<string> Profiles { get; set; } = Enumerable.Empty<string>();
+        public string Description { get; set; } = string.Empty;
     }
 }

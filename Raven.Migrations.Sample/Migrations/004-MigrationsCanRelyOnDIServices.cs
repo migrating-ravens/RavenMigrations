@@ -30,7 +30,7 @@ namespace Raven.Migrations.Sample.Migrations
 
             // Run the rest of our patch.
             this.PatchCollection(@"
-                from Employee
+                from Employees
                 update {
                     this.IsSilly = true;
                 }

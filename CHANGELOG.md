@@ -2,7 +2,11 @@
 All notable changes will be documented in this file, particularly any breaking
 changes. This project adheres to [Semantic Versioning](http://semver.org).
 
-## [x.x.x]
+## [5.0.0]
+- Updated to Raven 5.
+- Updated to latest .NET Standard
+- Updated sample to .NET Core 3.1 app
+- Fixed a test around multiple concurrent migrations.
 
 ## [4.2.0]
 - Added `SingleInstanceRunner` that allows execution of one migration process currently per database.

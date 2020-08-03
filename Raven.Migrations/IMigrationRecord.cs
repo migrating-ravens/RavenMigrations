@@ -2,6 +2,6 @@
 {
     public interface IMigrationRecord
     {
-        string Id { get; }
+        string? Id { get; }
     }
 }

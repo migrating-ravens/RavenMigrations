@@ -25,14 +25,14 @@ namespace Raven.Migrations
             SimultaneousMigrationTimeout = TimeSpan.FromHours(1);
         }
 
-        public string Database { get; set; }
+        public string? Database { get; set; }
         public Directions Direction { get; set; }
         public IList<Assembly> Assemblies { get; set; }
         public IList<string> Profiles { get; set; }
         public IMigrationResolver MigrationResolver { get; set; }
         public long ToVersion { get; set; }
         public MigrationConventions Conventions { get; set; }
-        public IMigrationRecordStore MigrationRecordStore { get; set; }
+        public IMigrationRecordStore? MigrationRecordStore { get; set; }
         
         /// <summary>
         /// Whether to prevent simultaenous migrations (e.g. from other web app instances) from running.
