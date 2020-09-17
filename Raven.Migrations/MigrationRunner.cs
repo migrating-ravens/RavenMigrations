@@ -132,7 +132,7 @@ namespace Raven.Migrations
         /// <returns></returns>
         private static IEnumerable<MigrationWithAttribute> FindAllMigrationsWithOptions(MigrationOptions options)
         {
-            var migrationsToRun = 
+            var migrationsToRun =
                 from assembly in options.Assemblies
                 from t in assembly.GetLoadableTypes()
                 where options.Conventions.TypeIsMigration(t)
@@ -145,8 +145,8 @@ namespace Raven.Migrations
                 select migration;
 
             // if we are going down, we want to run it in reverse
-            return options.Direction == Directions.Down 
-                ? migrationsToRun.OrderByDescending(x => x.Attribute!.Version) 
+            return options.Direction == Directions.Down
+                ? migrationsToRun.OrderByDescending(x => x.Attribute!.Version)
                 : migrationsToRun.OrderBy(x => x.Attribute!.Version);
         }
 
@@ -164,7 +164,7 @@ namespace Raven.Migrations
             if (profiles.Any() == false)
                 return true;
 
-            //The migration must belong to at least one of the currently 
+            //The migration must belong to at least one of the currently
             //specified profiles
             return options.Profiles
                 .Intersect(migrationWithAttribute.Attribute.Profiles, StringComparer.OrdinalIgnoreCase)
@@ -173,10 +173,10 @@ namespace Raven.Migrations
 
         private void DeleteExclusiveMigrationLock()
         {
-            var getExistingLockResult = this.store.Operations.Send(new GetCompareExchangeValueOperation<DateTime>(migrationLockKey));
+            var getExistingLockResult = this.store.Operations.ForDatabase(options.Database).Send(new GetCompareExchangeValueOperation<DateTime>(migrationLockKey));
             if (getExistingLockResult != null)
             {
-                var deleteLockResult = this.store.Operations.Send(new DeleteCompareExchangeValueOperation<DateTime>(migrationLockKey, getExistingLockResult.Index));
+                var deleteLockResult = this.store.Operations.ForDatabase(options.Database).Send(new DeleteCompareExchangeValueOperation<DateTime>(migrationLockKey, getExistingLockResult.Index));
                 if (!deleteLockResult.Successful)
                 {
                     logger.LogWarning("Unable to delete existing migrations lock using {deleteLockResult} and {getExistingLockResult}", deleteLockResult, getExistingLockResult);
@@ -196,7 +196,7 @@ namespace Raven.Migrations
             }
 
             // There's already a lock document. See if it's expired.
-            var getExistingLockResult = this.store.Operations.Send(new GetCompareExchangeValueOperation<DateTime>(migrationLockKey));
+            var getExistingLockResult = this.store.Operations.ForDatabase(options.Database).Send(new GetCompareExchangeValueOperation<DateTime>(migrationLockKey));
             var hasTimeoutPassed = getExistingLockResult != null && getExistingLockResult.Value < DateTime.UtcNow;
             if (hasTimeoutPassed)
             {
@@ -210,7 +210,7 @@ namespace Raven.Migrations
 
         private CompareExchangeResult<DateTime> SetCompareExchangeLock(DateTime lockExpiration, long lockIndex)
         {
-            return this.store.Operations.Send(new PutCompareExchangeValueOperation<DateTime>(migrationLockKey, lockExpiration, lockIndex));
+            return this.store.Operations.ForDatabase(options.Database).Send(new PutCompareExchangeValueOperation<DateTime>(migrationLockKey, lockExpiration, lockIndex));
         }
     }
 }
