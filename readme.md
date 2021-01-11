@@ -7,7 +7,7 @@
 ## Quick Start
 
 ```
-    PM > Install-Package RavenDB.Migrations
+    PM > Install-Package RavenMigrations
 ```
 
 ## Introduction
