@@ -3,18 +3,18 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Version>5.0.0</Version>
+    <Version>5.0.1</Version>
     <PackageId>RavenMigrations</PackageId>
     <Authors>Darrel Portzline, Khalid Abuhakmeh, Judah Gabriel Himango</Authors>
     <Company>BitShuva</Company>
     <Description>Raven Migrations is a migration framework for RavenDB to help with updates to your database objects.</Description>
-    <Copyright>BitShuva 2020</Copyright>
+    <Copyright>BitShuva 2022</Copyright>
     <Product>RavenDB.Migrations</Product>
     <PackageIconUrl></PackageIconUrl>
     <PackageProjectUrl>https://github.com/migrating-ravens/RavenMigrations</PackageProjectUrl>
     <PackageLicenseUrl></PackageLicenseUrl>
     <PackageTags>ravendb, nosql, migration, schema</PackageTags>
-    <PackageReleaseNotes>Migrated to Raven 5, latest .NET Standard. Fixed a test.</PackageReleaseNotes>
+    <PackageReleaseNotes>Allows supplying database name to operations.</PackageReleaseNotes>
 
     <!-- SourceLink support -->
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
