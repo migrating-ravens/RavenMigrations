@@ -67,11 +67,11 @@ namespace Raven.Migrations
             void ExecuteMigration(Directions direction, long version, Migration migration, Action action)
             {
                 string migrationDirection = direction == Directions.Down ? "Down" : "Up";
-                logger.LogInformation("[{0}] {1}: {2} migration started", version, migration.GetType().Name, migrationDirection);
+                logger.LogInformation("[{Version}] {MigrationName}: {MigrationDirection} migration started", version, migration.GetType().Name, migrationDirection);
                 var migrationStopwatch = Stopwatch.StartNew();
                 action();
                 migrationStopwatch.Stop();
-                logger.LogInformation("[{0}] {1}: {2} migration completed in {3}", version, migration.GetType().Name, migrationDirection, migrationStopwatch.Elapsed);
+                logger.LogInformation("[{Version}] {MigrationName}: {MigrationDirection} migration completed in {Elapsed}", version, migration.GetType().Name, migrationDirection, migrationStopwatch.Elapsed);
                 runCount++;
             }
 
@@ -122,7 +122,7 @@ namespace Raven.Migrations
             }
 
             sw.Stop();
-            logger.LogInformation("{migrationCount} migrations executed, {skipCount} skipped as unnecessary, took {elapsed}", runCount, skipCount, sw.Elapsed);
+            logger.LogInformation("{MigrationCount} migrations executed, {SkipCount} skipped as unnecessary, took {Elapsed}", runCount, skipCount, sw.Elapsed);
         }
 
         /// <summary>
@@ -179,7 +179,7 @@ namespace Raven.Migrations
                 var deleteLockResult = this.store.Operations.ForDatabase(options.Database).Send(new DeleteCompareExchangeValueOperation<DateTime>(migrationLockKey, getExistingLockResult.Index));
                 if (!deleteLockResult.Successful)
                 {
-                    logger.LogWarning("Unable to delete existing migrations lock using {deleteLockResult} and {getExistingLockResult}", deleteLockResult, getExistingLockResult);
+                    logger.LogWarning("Unable to delete existing migrations lock using {DeleteLockResult} and {GetExistingLockResult}", deleteLockResult, getExistingLockResult);
                 }
             }
         }
