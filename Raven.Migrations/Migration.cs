@@ -2,6 +2,7 @@
 using Raven.Client.Documents;
 using Raven.Client.Documents.Commands;
 using Raven.Client.Documents.Operations;
+using Raven.Client.Documents.Queries;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -83,6 +84,8 @@ namespace Raven.Migrations
         /// Patches a collection of documents using RQL.
         /// </summary>
         /// <param name="rql">The RQL code to patch.</param>
+        /// <param name="waitForCompletion">Flag indicating whether to wait for completion.</param>
+        /// <param name="staleTimeout">Maximum time to wait for index to become non-stale before patching.</param>
         /// <returns>The patch operation.</returns>
         /// <remarks>
         /// View all examples at https://ravendb.net/docs/article-page/4.0/csharp/client-api/operations/patching/set-based
@@ -93,9 +96,19 @@ namespace Raven.Migrations
         ///         PatchCollection("from Orders update { this.Freight += 10 }");
         ///     </code>
         /// </example>
-        protected Operation PatchCollection(string rql, bool waitForCompletion = true)
+        protected Operation PatchCollection(string rql, bool waitForCompletion = true, TimeSpan? staleTimeout = null)
         {
-            var operation = DocumentStore.Operations.ForDatabase(Database).Send(new PatchByQueryOperation(rql));
+            var patchByQuery = new PatchByQueryOperation(
+                new IndexQuery
+                {
+                    Query = rql
+                },
+                new QueryOperationOptions
+                {
+                    StaleTimeout = staleTimeout
+                });
+
+            var operation = DocumentStore.Operations.ForDatabase(Database).Send(patchByQuery);
             if (waitForCompletion)
             {
                 operation.WaitForCompletion();

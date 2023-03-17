@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -6,6 +7,8 @@ using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Raven.Client.Documents;
+using Raven.Client.Documents.Indexes;
+using Raven.Client.Documents.Operations.Indexes;
 using Raven.TestDriver;
 using Xunit;
 
@@ -99,6 +102,30 @@ namespace Raven.Migrations.Tests
                 .Be(1);
         }
 
+        [Fact]
+        public async Task Migration_should_wait_for_index_to_become_non_stale_if_stale_timeout_set()
+        {
+            using var documentStore = GetDocumentStore();
+            await new TestPersonIndex().ExecuteAsync(documentStore);
+
+            await documentStore.Maintenance.SendAsync(new StopIndexingOperation());
+            var professorZoom = InitialiseWithPerson(documentStore, "Professor", "Zoom");
+
+            var migration = new AddFullNameWithStalenessTimeout();
+            migration.Setup(documentStore, new MigrationOptions(), logger);
+
+            var migrationTask = Task.Run(() => migration.Up());
+            while (migrationTask.Status != TaskStatus.Running)
+                await Task.Delay(100);
+
+            await documentStore.Maintenance.SendAsync(new StartIndexingOperation());
+            await migrationTask;
+
+            using var session = documentStore.OpenSession();
+            var loaded = session.Load<Person>(professorZoom.Id);
+            loaded.FullName.Should().Be("Professor Zoom");
+        }
+
         private Person InitialiseWithPerson(IDocumentStore store, string firstName, string lastName)
         {
             using var session = store.OpenSession();
@@ -106,16 +133,6 @@ namespace Raven.Migrations.Tests
             session.Store(person);
             session.SaveChanges();
             return person;
-        }
-
-        private void InitialiseWithPeople(IDocumentStore store, List<Person> people)
-        {
-            using (var session = store.OpenSession())
-            {
-                people.ForEach(p => session.Store(p));
-                session.SaveChanges();
-            }
-            WaitForIndexing(store);
         }
     }
 
@@ -133,10 +150,22 @@ namespace Raven.Migrations.Tests
         }
     }
 
-    public class FooBaz
+    [Migration(2, "alter")]
+    public class AddFullNameWithStalenessTimeout : Migration
     {
-        public int Id { get; set; }
-        public string Bar { get; set; }
+        public override void Up()
+        {
+            PatchCollection(
+                "from index 'TestPersonIndex' update { this.FullName = this.FirstName + ' ' + this.LastName; }",
+                staleTimeout: TimeSpan.FromMinutes(5));
+        }
+
+        public override void Down()
+        {
+            PatchCollection(
+                "from index 'TestPersonIndex' update { delete this.FullName; }",
+                staleTimeout: TimeSpan.FromMinutes(5));
+        }
     }
 
     public class Person
@@ -145,5 +174,14 @@ namespace Raven.Migrations.Tests
         public string FirstName { get; set; }
         public string LastName { get; set; }
         public string FullName { get; set; }
+    }
+
+    public class TestPersonIndex : AbstractIndexCreationTask<Person>
+    {
+        public TestPersonIndex()
+        {
+            Map = tests => from t in tests
+                select new { t.Id, t.FullName };
+        }
     }
 }
