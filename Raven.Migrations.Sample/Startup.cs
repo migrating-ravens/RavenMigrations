@@ -9,6 +9,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Raven.Client.Documents;
+using Raven.Migrations.Sample.Common;
 using Raven.Migrations.Sample.Services;
 
 namespace Raven.Migrations.Sample
@@ -43,6 +44,7 @@ namespace Raven.Migrations.Sample
                 Urls = new[] { "http://live-test.ravendb.net" }
             };
             docStore.Initialize();
+            docStore.EnsureExists(); // Extension method that creates the database if it doesn't exist yet.
             services.AddSingleton<IDocumentStore>(docStore);
 
             // Step 2: Add MigrationRunner singleton. 

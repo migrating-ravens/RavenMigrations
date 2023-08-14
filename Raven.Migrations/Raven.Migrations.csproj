@@ -35,7 +35,7 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="3.1.6" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="3.1.6" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All" />
-    <PackageReference Include="RavenDB.Client" Version="5.0.0" />
+    <PackageReference Include="RavenDB.Client" Version="5.4.109" />
   </ItemGroup>
 
   <ItemGroup>
