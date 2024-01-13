@@ -51,7 +51,7 @@ namespace Raven.Migrations
             IServiceCollection services, 
             Action<MigrationOptions>? configuration, 
             IDocumentStore? docStore, 
-            Assembly assembly)
+            Assembly? assembly)
         {
             if (assembly == null)
             {
@@ -61,12 +61,12 @@ namespace Raven.Migrations
             return services.AddSingleton(provider => CreateMigrationRunnerFromProvider(provider, assembly, configuration, docStore));
         }
 
-        private static MigrationRunner CreateMigrationRunnerFromProvider(IServiceProvider provider, Assembly callingAssembly, Action<MigrationOptions>? configuration = null, IDocumentStore? store = null)
+        private static MigrationRunner CreateMigrationRunnerFromProvider(IServiceProvider provider, Assembly? callingAssembly, Action<MigrationOptions>? configuration = null, IDocumentStore? store = null)
         {
             var migrationResolver = new DependencyInjectionMigrationResolver(provider);
             var options = new MigrationOptions(migrationResolver);
             configuration?.Invoke(options);
-            if (options.Assemblies.Count == 0)
+            if (options.Assemblies.Count == 0 && callingAssembly != null)
             {
                 // No assemblies configured? Use the assembly that called .AddRavenDbMigrations.
                 options.Assemblies.Add(callingAssembly);

@@ -9,7 +9,7 @@ namespace Raven.Migrations
     {
         public Migration Resolve(Type migrationType)
         {
-            return (Migration)Activator.CreateInstance(migrationType);
+            return (Migration)Activator.CreateInstance(migrationType)!;
         }
     }
 }

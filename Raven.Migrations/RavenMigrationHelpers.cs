@@ -27,8 +27,14 @@ namespace Raven.Migrations
         public static MigrationAttribute GetMigrationAttribute(this Type type)
         {
             var attribute = Attribute.GetCustomAttributes(type)
-                .FirstOrDefault(x => x is MigrationAttribute);
-            return (MigrationAttribute) attribute;
+                .OfType<MigrationAttribute>()
+                .FirstOrDefault();
+            if (attribute == null)
+            {
+                throw new InvalidOperationException("The migration must be decorated with a [Migration] attribute");
+            }
+
+            return attribute;
         }
 
         public static IEnumerable<Type> GetLoadableTypes(this Assembly assembly)
@@ -44,7 +50,7 @@ namespace Raven.Migrations
             }
             catch (ReflectionTypeLoadException e)
             {
-                return e.Types.Where(t => t != null);
+                return e.Types.Where(t => t != null)!;
             }
         }
 
