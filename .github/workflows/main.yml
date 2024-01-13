@@ -5,7 +5,7 @@ on:
       - master # Default release branch
 jobs:
   publish:
-    name: build, pack & publish
+    name: Build, pack & publish RavenMigrations Nuget package
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
