@@ -27,7 +27,7 @@
     <nullable>enable</nullable>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-    <Title>RavenDB.Migrations</Title>
+    <Title></Title>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
   <ItemGroup>
