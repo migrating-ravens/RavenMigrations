@@ -1,4 +1,4 @@
-﻿
+
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.30320.27
@@ -12,9 +12,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		readme.md = readme.md
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Raven.Migrations.Sample", "Raven.Migrations.Sample\Raven.Migrations.Sample.csproj", "{06F1A0C0-E4CD-460A-B332-487440F603DF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Raven.Migrations.Sample", "Raven.Migrations.Sample\Raven.Migrations.Sample.csproj", "{06F1A0C0-E4CD-460A-B332-487440F603DF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Raven.Migrations.Tests", "Raven.Migrations.Tests\Raven.Migrations.Tests.csproj", "{221A2856-09CA-4D59-A2F4-E961D37DD155}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Raven.Migrations.Tests", "Raven.Migrations.Tests\Raven.Migrations.Tests.csproj", "{221A2856-09CA-4D59-A2F4-E961D37DD155}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
