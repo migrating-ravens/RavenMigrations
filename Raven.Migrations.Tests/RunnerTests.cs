@@ -4,6 +4,7 @@ using FluentAssertions;
 using Raven.Client.Documents.Indexes;
 using Raven.TestDriver;
 using Xunit;
+using static System.Formats.Asn1.AsnWriter;
 
 namespace Raven.Migrations.Tests
 {
@@ -246,6 +247,17 @@ namespace Raven.Migrations.Tests
             var development = session.Load<object>("migrated-using-BaseMigration");
             development.Should().NotBeNull();
         }
+
+        [Fact]
+        public void Failed_migrations_throw()
+        {
+            var options = GetMigrationOptions();
+            options.Profiles.Add("migration that throws exception");
+
+            using var store = GetDocumentStore();
+            var runner = new MigrationRunner(store, options, new ConsoleLogger());
+            Assert.Throws<System.Exception>(() => runner.Run());
+        }
         
         private MigrationOptions GetMigrationOptions()
         {
@@ -335,7 +347,18 @@ namespace Raven.Migrations.Tests
         public override void Up()
         {
         }
-    }    
+    }
+
+    [Migration(6, "migration that throws exception")]    
+    public class MigrationThrowsException : Migration
+    {
+        public override void Up()
+        {
+            throw new System.Exception("This is failing migration");
+        }
+    }
+
+    
     
     public abstract class BaseMigration : Migration
     {
