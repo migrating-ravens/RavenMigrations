@@ -89,7 +89,7 @@ namespace Raven.Migrations
                         if (migrationDoc == null)
                         {
                             skipCount++;
-                            continue;
+                            break;
                         }
 
                         ExecuteMigration(options.Direction, pair.Attribute!.Version, migration, () => {
@@ -103,7 +103,7 @@ namespace Raven.Migrations
                         if (migrationDoc != null)
                         {
                             skipCount++;
-                            continue;
+                            break;
                         }
 
                         ExecuteMigration(options.Direction, pair.Attribute!.Version, migration, () => {
