@@ -1,8 +1,8 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Version>6.0.1</Version>
+    <Version>6.0.2</Version>
     <PackageId>RavenMigrations</PackageId>
     <Authors>Darrel Portzline, Khalid Abuhakmeh, Judah Gabriel Himango</Authors>
     <Company>BitShuva</Company>
