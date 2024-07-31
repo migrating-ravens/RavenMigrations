@@ -16,10 +16,10 @@ public static class RavenExtensions
             using var dbSession = store.OpenSession();
             dbSession.Query<Shipper>().Take(0).ToList();
         }
-        catch (Raven.Client.Exceptions.Database.DatabaseDoesNotExistException)
+        catch (Client.Exceptions.Database.DatabaseDoesNotExistException)
         {
             // Create the database.
-            store.Maintenance.Server.Send(new Raven.Client.ServerWide.Operations.CreateDatabaseOperation(new Raven.Client.ServerWide.DatabaseRecord
+            store.Maintenance.Server.Send(new Client.ServerWide.Operations.CreateDatabaseOperation(new Client.ServerWide.DatabaseRecord
             {
                 DatabaseName = store.Database
             }));

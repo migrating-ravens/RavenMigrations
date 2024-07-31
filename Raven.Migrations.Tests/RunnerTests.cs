@@ -1,10 +1,9 @@
-﻿using System.Linq;
-using System.Reflection;
-using FluentAssertions;
+﻿using FluentAssertions;
 using Raven.Client.Documents.Indexes;
 using Raven.TestDriver;
+using System.Linq;
+using System.Reflection;
 using Xunit;
-using static System.Formats.Asn1.AsnWriter;
 
 namespace Raven.Migrations.Tests
 {
